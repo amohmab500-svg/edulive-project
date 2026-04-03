@@ -1,37 +1,44 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { Pencil, Trash2, Plus, X } from "lucide-react";
 
-const initialLevels = [
-  {
-    id: 1,
-    image: "https://picsum.photos/60?1",
-    name: "BTP",
-    description: "-",
-  },
-  {
-    id: 2,
-    image: "https://picsum.photos/60?2",
-    name: "BTS",
-    description: "-",
-  },
-  {
-    id: 3,
-    image: "https://picsum.photos/60?3",
-    name: "Langues",
-    description: "-",
-  },
-];
+type Level = {
+  id: number;
+  name: string;
+  description: string | null;
+  image: string | null;
+};
 
 export default function Levels() {
   const [openModal, setOpenModal] = useState(false);
-  const [levelsData, setLevelsData] = useState(initialLevels);
+  const [levelsData, setLevelsData] = useState<Level[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     image: "",
   });
+
+  useEffect(() => {
+    fetchLevels();
+  }, []);
+
+  const fetchLevels = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get("http://localhost:5000/api/levels");
+       console.log("LEVELS API RESPONSE:", res.data);
+
+      setLevelsData(res.data);
+    } catch (error) {
+      console.error("Error fetching levels:", error);
+      alert("Erreur lors du chargement des niveaux");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const resetForm = () => {
     setFormData({
@@ -47,60 +54,59 @@ export default function Levels() {
     setOpenModal(true);
   };
 
-  const handleOpenEditModal = (level: {
-    id: number;
-    name: string;
-    description: string;
-    image: string;
-  }) => {
+  const handleOpenEditModal = (level: Level) => {
     setEditingId(level.id);
     setFormData({
-      name: level.name,
-      description: level.description,
-      image: level.image,
+      name: level.name || "",
+      description: level.description || "",
+      image: level.image || "",
     });
     setOpenModal(true);
   };
 
-  const handleSaveLevel = () => {
+  const handleSaveLevel = async () => {
     if (!formData.name.trim()) {
       alert("Veuillez entrer le nom du niveau");
       return;
     }
 
-    if (editingId !== null) {
-      setLevelsData((prev) =>
-        prev.map((level) =>
-          level.id === editingId
-            ? {
-                ...level,
-                name: formData.name,
-                description: formData.description || "-",
-                image: formData.image || "https://picsum.photos/60",
-              }
-            : level
-        )
-      );
-    } else {
-      const levelToAdd = {
-        id: Date.now(),
-        name: formData.name,
-        description: formData.description || "-",
-        image: formData.image || "https://picsum.photos/60",
-      };
+    try {
+      if (editingId !== null) {
+        await axios.put(`http://localhost:5000/api/levels/${editingId}`, {
+          name: formData.name,
+          description: formData.description,
+          image: formData.image,
+        });
+      } else {
+        await axios.post("http://localhost:5000/api/levels", {
+          name: formData.name,
+          description: formData.description,
+          image: formData.image,
+        });
+      }
 
-      setLevelsData((prev) => [...prev, levelToAdd]);
+      await fetchLevels();
+      setOpenModal(false);
+      resetForm();
+    } catch (error) {
+      console.error("Error saving level:", error);
+      alert("Erreur lors de l'enregistrement du niveau");
     }
-
-    setOpenModal(false);
-    resetForm();
   };
 
-  const handleDeleteLevel = (id: number) => {
-    const confirmed = window.confirm("Voulez-vous vraiment supprimer ce niveau ?");
+  const handleDeleteLevel = async (id: number) => {
+    const confirmed = window.confirm(
+      "Voulez-vous vraiment supprimer ce niveau ?"
+    );
     if (!confirmed) return;
 
-    setLevelsData((prev) => prev.filter((level) => level.id !== id));
+    try {
+      await axios.delete(`http://localhost:5000/api/levels/${id}`);
+      await fetchLevels();
+    } catch (error) {
+      console.error("Error deleting level:", error);
+      alert("Erreur lors de la suppression du niveau");
+    }
   };
 
   return (
@@ -143,52 +149,58 @@ export default function Levels() {
           Niveaux ({levelsData.length})
         </h2>
 
-        <table className="w-full">
-          <thead className="border-b text-left text-sm text-slate-500">
-            <tr>
-              <th className="pb-3">Image</th>
-              <th className="pb-3">Nom</th>
-              <th className="pb-3">Description</th>
-              <th className="pb-3 text-right">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody className="divide-y">
-            {levelsData.map((level) => (
-              <tr key={level.id} className="h-20">
-                <td className="py-3">
-                  <img
-                    src={level.image}
-                    alt={level.name}
-                    className="h-14 w-14 rounded-lg object-cover"
-                  />
-                </td>
-
-                <td className="font-medium text-slate-800">{level.name}</td>
-
-                <td className="text-slate-500">{level.description}</td>
-
-                <td className="text-right">
-                  <div className="flex justify-end gap-3">
-                    <button
-                      onClick={() => handleOpenEditModal(level)}
-                      className="rounded-lg p-2 hover:bg-slate-100"
-                    >
-                      <Pencil size={18} className="text-slate-600" />
-                    </button>
-
-                    <button
-                      onClick={() => handleDeleteLevel(level.id)}
-                      className="rounded-lg p-2 hover:bg-red-50"
-                    >
-                      <Trash2 size={18} className="text-red-500" />
-                    </button>
-                  </div>
-                </td>
+        {loading ? (
+          <p className="text-slate-500">Chargement...</p>
+        ) : (
+          <table className="w-full">
+            <thead className="border-b text-left text-sm text-slate-500">
+              <tr>
+                <th className="pb-3">Image</th>
+                <th className="pb-3">Nom</th>
+                <th className="pb-3">Description</th>
+                <th className="pb-3 text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody className="divide-y">
+              {levelsData.map((level) => (
+                <tr key={level.id} className="h-20">
+                  <td className="py-3">
+                    <img
+                      src={level.image || "https://picsum.photos/60"}
+                      alt={level.name}
+                      className="h-14 w-14 rounded-lg object-cover"
+                    />
+                  </td>
+
+                  <td className="font-medium text-slate-800">{level.name}</td>
+
+                  <td className="text-slate-500">
+                    {level.description || "-"}
+                  </td>
+
+                  <td className="text-right">
+                    <div className="flex justify-end gap-3">
+                      <button
+                        onClick={() => handleOpenEditModal(level)}
+                        className="rounded-lg p-2 hover:bg-slate-100"
+                      >
+                        <Pencil size={18} className="text-slate-600" />
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteLevel(level.id)}
+                        className="rounded-lg p-2 hover:bg-red-50"
+                      >
+                        <Trash2 size={18} className="text-red-500" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {openModal && (

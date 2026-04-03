@@ -1,53 +1,70 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { Pencil, Trash2, Plus, X } from "lucide-react";
 
-const initialStudents = [
-  {
-    id: 1,
-    photo: "https://picsum.photos/60?21",
-    fullName: "Amira Ben Salah",
-    email: "amira@edulive.com",
-    phone: "+216 20 111 111",
-    level: "BTP",
-  },
-  {
-    id: 2,
-    photo: "https://picsum.photos/60?22",
-    fullName: "Omar Trabelsi",
-    email: "omar@edulive.com",
-    phone: "+216 21 222 222",
-    level: "BTS",
-  },
-  {
-    id: 3,
-    photo: "https://picsum.photos/60?23",
-    fullName: "Sarra Gharbi",
-    email: "sarra@edulive.com",
-    phone: "+216 22 333 333",
-    level: "Langues",
-  },
-];
+type Student = {
+  id: number;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  level_id: number | null;
+  level_name?: string | null;
+};
+
+type Level = {
+  id: number;
+  name: string;
+  description: string | null;
+  image: string | null;
+};
 
 export default function Students() {
-  const [studentsData, setStudentsData] = useState(initialStudents);
+  const [studentsData, setStudentsData] = useState<Student[]>([]);
+  const [levelsData, setLevelsData] = useState<Level[]>([]);
   const [openModal, setOpenModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    fullName: "",
+    name: "",
     email: "",
     phone: "",
-    level: "",
-    photo: "",
+    level_id: "",
   });
+
+  useEffect(() => {
+    fetchStudents();
+    fetchLevels();
+  }, []);
+
+  const fetchStudents = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get("http://localhost:5000/api/students");
+      setStudentsData(res.data);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      alert("Erreur lors du chargement des élèves");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchLevels = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/levels");
+      setLevelsData(res.data);
+    } catch (error) {
+      console.error("Error fetching levels:", error);
+    }
+  };
 
   const resetForm = () => {
     setFormData({
-      fullName: "",
+      name: "",
       email: "",
       phone: "",
-      level: "",
-      photo: "",
+      level_id: "",
     });
     setEditingId(null);
   };
@@ -57,70 +74,59 @@ export default function Students() {
     setOpenModal(true);
   };
 
-  const handleOpenEditModal = (student: {
-    id: number;
-    fullName: string;
-    email: string;
-    phone: string;
-    level: string;
-    photo: string;
-  }) => {
+  const handleOpenEditModal = (student: Student) => {
     setEditingId(student.id);
     setFormData({
-      fullName: student.fullName,
-      email: student.email,
-      phone: student.phone,
-      level: student.level,
-      photo: student.photo,
+      name: student.name || "",
+      email: student.email || "",
+      phone: student.phone || "",
+      level_id: student.level_id ? String(student.level_id) : "",
     });
     setOpenModal(true);
   };
 
-  const handleSaveStudent = () => {
-    if (!formData.fullName.trim() || !formData.email.trim()) {
-      alert("Veuillez remplir au moins le nom et l'email");
+  const handleSaveStudent = async () => {
+    if (!formData.name.trim()) {
+      alert("Veuillez remplir au moins le nom");
       return;
     }
 
-    if (editingId !== null) {
-      setStudentsData((prev) =>
-        prev.map((student) =>
-          student.id === editingId
-            ? {
-                ...student,
-                fullName: formData.fullName,
-                email: formData.email,
-                phone: formData.phone || "-",
-                level: formData.level || "-",
-                photo: formData.photo || "https://picsum.photos/60",
-              }
-            : student
-        )
-      );
-    } else {
-      const studentToAdd = {
-        id: Date.now(),
-        fullName: formData.fullName,
+    try {
+      const payload = {
+        name: formData.name,
         email: formData.email,
-        phone: formData.phone || "-",
-        level: formData.level || "-",
-        photo: formData.photo || "https://picsum.photos/60",
+        phone: formData.phone,
+        level_id: formData.level_id ? Number(formData.level_id) : null,
       };
 
-      setStudentsData((prev) => [...prev, studentToAdd]);
-    }
+      if (editingId !== null) {
+        await axios.put(`http://localhost:5000/api/students/${editingId}`, payload);
+      } else {
+        await axios.post("http://localhost:5000/api/students", payload);
+      }
 
-    setOpenModal(false);
-    resetForm();
+      await fetchStudents();
+      setOpenModal(false);
+      resetForm();
+    } catch (error) {
+      console.error("Error saving student:", error);
+      alert("Erreur lors de l'enregistrement de l'élève");
+    }
   };
 
-  const handleDeleteStudent = (id: number) => {
+  const handleDeleteStudent = async (id: number) => {
     const confirmed = window.confirm(
       "Voulez-vous vraiment supprimer cet élève ?"
     );
     if (!confirmed) return;
 
-    setStudentsData((prev) => prev.filter((student) => student.id !== id));
+    try {
+      await axios.delete(`http://localhost:5000/api/students/${id}`);
+      await fetchStudents();
+    } catch (error) {
+      console.error("Error deleting student:", error);
+      alert("Erreur lors de la suppression de l'élève");
+    }
   };
 
   return (
@@ -149,55 +155,50 @@ export default function Students() {
           Élèves ({studentsData.length})
         </h2>
 
-        <table className="w-full">
-          <thead className="border-b text-left text-sm text-slate-500">
-            <tr>
-              <th className="pb-3">Photo</th>
-              <th className="pb-3">Nom</th>
-              <th className="pb-3">Email</th>
-              <th className="pb-3">Téléphone</th>
-              <th className="pb-3">Niveau</th>
-              <th className="pb-3 text-right">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody className="divide-y">
-            {studentsData.map((student) => (
-              <tr key={student.id} className="h-20">
-                <td className="py-3">
-                  <img
-                    src={student.photo}
-                    alt={student.fullName}
-                    className="h-14 w-14 rounded-lg object-cover"
-                  />
-                </td>
-
-                <td className="font-medium text-slate-800">{student.fullName}</td>
-                <td className="text-slate-600">{student.email}</td>
-                <td className="text-slate-600">{student.phone}</td>
-                <td className="text-slate-600">{student.level}</td>
-
-                <td className="text-right">
-                  <div className="flex justify-end gap-3">
-                    <button
-                      onClick={() => handleOpenEditModal(student)}
-                      className="rounded-lg p-2 hover:bg-slate-100"
-                    >
-                      <Pencil size={18} className="text-slate-600" />
-                    </button>
-
-                    <button
-                      onClick={() => handleDeleteStudent(student.id)}
-                      className="rounded-lg p-2 hover:bg-red-50"
-                    >
-                      <Trash2 size={18} className="text-red-500" />
-                    </button>
-                  </div>
-                </td>
+        {loading ? (
+          <p className="text-slate-500">Chargement...</p>
+        ) : (
+          <table className="w-full">
+            <thead className="border-b text-left text-sm text-slate-500">
+              <tr>
+                <th className="pb-3">Nom</th>
+                <th className="pb-3">Email</th>
+                <th className="pb-3">Téléphone</th>
+                <th className="pb-3">Niveau</th>
+                <th className="pb-3 text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody className="divide-y">
+              {studentsData.map((student) => (
+                <tr key={student.id} className="h-20">
+                  <td className="font-medium text-slate-800">{student.name}</td>
+                  <td className="text-slate-600">{student.email || "-"}</td>
+                  <td className="text-slate-600">{student.phone || "-"}</td>
+                  <td className="text-slate-600">{student.level_name || "-"}</td>
+
+                  <td className="text-right">
+                    <div className="flex justify-end gap-3">
+                      <button
+                        onClick={() => handleOpenEditModal(student)}
+                        className="rounded-lg p-2 hover:bg-slate-100"
+                      >
+                        <Pencil size={18} className="text-slate-600" />
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteStudent(student.id)}
+                        className="rounded-lg p-2 hover:bg-red-50"
+                      >
+                        <Trash2 size={18} className="text-red-500" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {openModal && (
@@ -205,9 +206,7 @@ export default function Students() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-slate-800">
-                {editingId !== null
-                  ? "Modifier l'Élève"
-                  : "Ajouter un Élève"}
+                {editingId !== null ? "Modifier l'Élève" : "Ajouter un Élève"}
               </h2>
 
               <button
@@ -228,9 +227,9 @@ export default function Students() {
                 </label>
                 <input
                   type="text"
-                  value={formData.fullName}
+                  value={formData.name}
                   onChange={(e) =>
-                    setFormData({ ...formData, fullName: e.target.value })
+                    setFormData({ ...formData, name: e.target.value })
                   }
                   placeholder="Nom complet"
                   className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500"
@@ -271,30 +270,20 @@ export default function Students() {
                 <label className="mb-1 block text-sm font-medium text-slate-700">
                   Niveau
                 </label>
-                <input
-                  type="text"
-                  value={formData.level}
+                <select
+                  value={formData.level_id}
                   onChange={(e) =>
-                    setFormData({ ...formData, level: e.target.value })
+                    setFormData({ ...formData, level_id: e.target.value })
                   }
-                  placeholder="BTP / BTS / Langues"
                   className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Photo URL
-                </label>
-                <input
-                  type="text"
-                  value={formData.photo}
-                  onChange={(e) =>
-                    setFormData({ ...formData, photo: e.target.value })
-                  }
-                  placeholder="https://example.com/photo.jpg"
-                  className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500"
-                />
+                >
+                  <option value="">Sélectionner un niveau</option>
+                  {levelsData.map((level) => (
+                    <option key={level.id} value={level.id}>
+                      {level.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <button

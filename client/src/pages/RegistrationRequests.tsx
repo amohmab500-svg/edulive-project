@@ -1,45 +1,47 @@
-import React, { useState } from "react";
-import { Eye, CheckCircle, XCircle } from "lucide-react";
-
-const initialRequests = [
-  {
-    id: 1,
-    name: "Ridha Zoghlami",
-    email: "reseausp@gmail.com",
-    phone: "29261711",
-    course: "C2",
-    category: "Langues",
-    status: "pending",
-    date: "11 janvier 2026 à 16:41",
-  },
-  {
-    id: 2,
-    name: "ahmed ali",
-    email: "visex15194@akixpres.com",
-    phone: "+21688975789",
-    course: "A1",
-    category: "Langues",
-    status: "pending",
-    date: "9 janvier 2026 à 15:01",
-  },
-  {
-    id: 3,
-    name: "Arayedh Mohamed",
-    email: "arayedhm@gmail.com",
-    phone: "26222281",
-    course: "BTP",
-    category: "Dessin et Études",
-    status: "pending",
-    date: "7 janvier 2026 à 10:15",
-  },
-];
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { Eye, CheckCircle, XCircle, X } from "lucide-react";
 
 type RequestStatus = "pending" | "approved" | "rejected";
 type FilterTab = "pending" | "approved" | "rejected" | "all";
 
+type Registration = {
+  id: number;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  level_id: number | null;
+  level_name?: string | null;
+  message: string | null;
+  status: RequestStatus;
+  rejection_reason: string | null;
+  created_at: string;
+};
+
 export default function RegistrationRequests() {
-  const [requests, setRequests] = useState(initialRequests);
+  const [requests, setRequests] = useState<Registration[]>([]);
   const [activeTab, setActiveTab] = useState<FilterTab>("pending");
+  const [loading, setLoading] = useState(false);
+
+  const [selectedRequest, setSelectedRequest] = useState<Registration | null>(null);
+  const [openDetailsModal, setOpenDetailsModal] = useState(false);
+
+  useEffect(() => {
+    fetchRegistrations();
+  }, []);
+
+  const fetchRegistrations = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get("http://localhost:5000/api/registrations");
+      setRequests(res.data);
+    } catch (error) {
+      console.error("Error fetching registrations:", error);
+      alert("Erreur lors du chargement des demandes");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const pendingCount = requests.filter((r) => r.status === "pending").length;
   const approvedCount = requests.filter((r) => r.status === "approved").length;
@@ -50,12 +52,25 @@ export default function RegistrationRequests() {
       ? requests
       : requests.filter((r) => r.status === activeTab);
 
-  const updateStatus = (id: number, status: RequestStatus) => {
-    setRequests((prev) =>
-      prev.map((request) =>
-        request.id === id ? { ...request, status } : request
-      )
-    );
+  const updateStatus = async (id: number, status: RequestStatus) => {
+    try {
+      let rejection_reason: string | null = null;
+
+      if (status === "rejected") {
+        const reason = window.prompt("Entrez la raison du refus :");
+        rejection_reason = reason || null;
+      }
+
+      await axios.put(`http://localhost:5000/api/registrations/${id}`, {
+        status,
+        rejection_reason,
+      });
+
+      await fetchRegistrations();
+    } catch (error) {
+      console.error("Error updating registration status:", error);
+      alert("Erreur lors de la mise à jour du statut");
+    }
   };
 
   const getStatusBadge = (status: RequestStatus) => {
@@ -81,6 +96,15 @@ export default function RegistrationRequests() {
         : "text-slate-500 hover:text-slate-800"
     }`;
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString("fr-FR");
+  };
+
+  const openDetails = (request: Registration) => {
+    setSelectedRequest(request);
+    setOpenDetailsModal(true);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -88,8 +112,7 @@ export default function RegistrationRequests() {
           Demandes d'Inscription
         </h1>
         <p className="mt-1 text-slate-500">
-          Approuvez ou refusez les demandes d'inscription. L'approbation crée
-          automatiquement un compte utilisateur.
+          Approuvez ou refusez les demandes d'inscription.
         </p>
       </div>
 
@@ -116,7 +139,7 @@ export default function RegistrationRequests() {
               <h2 className="mt-10 text-4xl font-bold text-slate-900">
                 {approvedCount}
               </h2>
-              <p className="mt-2 text-sm text-slate-500">Comptes créés</p>
+              <p className="mt-2 text-sm text-slate-500">Demandes validées</p>
             </div>
             <span className="text-xl text-green-500">✔</span>
           </div>
@@ -168,85 +191,130 @@ export default function RegistrationRequests() {
         </p>
 
         <div className="mt-6 overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b text-left text-sm text-slate-500">
-              <tr>
-                <th className="pb-4">Candidat</th>
-                <th className="pb-4">Email</th>
-                <th className="pb-4">Téléphone</th>
-                <th className="pb-4">Cours Souhaité</th>
-                <th className="pb-4">Statut</th>
-                <th className="pb-4">Date</th>
-                <th className="pb-4 text-right">Actions</th>
-              </tr>
-            </thead>
+          {loading ? (
+            <p className="py-8 text-center text-slate-500">Chargement...</p>
+          ) : (
+            <table className="w-full">
+              <thead className="border-b text-left text-sm text-slate-500">
+                <tr>
+                  <th className="pb-4">Candidat</th>
+                  <th className="pb-4">Email</th>
+                  <th className="pb-4">Téléphone</th>
+                  <th className="pb-4">Niveau</th>
+                  <th className="pb-4">Statut</th>
+                  <th className="pb-4">Date</th>
+                  <th className="pb-4 text-right">Actions</th>
+                </tr>
+              </thead>
 
-            <tbody className="divide-y">
-              {filteredRequests.length > 0 ? (
-                filteredRequests.map((request) => (
-                  <tr key={request.id} className="h-24">
-                    <td className="font-medium text-slate-800">{request.name}</td>
+              <tbody className="divide-y">
+                {filteredRequests.length > 0 ? (
+                  filteredRequests.map((request) => (
+                    <tr key={request.id} className="h-24">
+                      <td className="font-medium text-slate-800">
+                        {request.full_name}
+                      </td>
 
-                    <td className="text-slate-600">{request.email}</td>
+                      <td className="text-slate-600">{request.email}</td>
 
-                    <td className="text-slate-600">{request.phone}</td>
+                      <td className="text-slate-600">{request.phone || "-"}</td>
 
-                    <td>
-                      <p className="font-medium text-slate-800">{request.course}</p>
-                      <p className="text-sm text-slate-500">{request.category}</p>
-                    </td>
+                      <td className="text-slate-600">
+                        {request.level_name || "-"}
+                      </td>
 
-                    <td>
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusBadge(
-                          request.status as RequestStatus
-                        )}`}
-                      >
-                        {getStatusText(request.status as RequestStatus)}
-                      </span>
-                    </td>
-
-                    <td className="text-slate-500">{request.date}</td>
-
-                    <td>
-                      <div className="flex justify-end gap-3">
-                        <button
-                          className="rounded-lg p-2 hover:bg-slate-100"
-                          title="Voir"
+                      <td>
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusBadge(
+                            request.status
+                          )}`}
                         >
-                          <Eye size={18} className="text-slate-600" />
-                        </button>
+                          {getStatusText(request.status)}
+                        </span>
+                      </td>
 
-                        <button
-                          onClick={() => updateStatus(request.id, "approved")}
-                          className="rounded-lg p-2 hover:bg-green-50"
-                          title="Approuver"
-                        >
-                          <CheckCircle size={18} className="text-green-600" />
-                        </button>
+                      <td className="text-slate-500">
+                        {formatDate(request.created_at)}
+                      </td>
 
-                        <button
-                          onClick={() => updateStatus(request.id, "rejected")}
-                          className="rounded-lg p-2 hover:bg-red-50"
-                          title="Refuser"
-                        >
-                          <XCircle size={18} className="text-red-600" />
-                        </button>
-                      </div>
+                      <td>
+                        <div className="flex justify-end gap-3">
+                          <button
+                            onClick={() => openDetails(request)}
+                            className="rounded-lg p-2 hover:bg-slate-100"
+                            title="Voir"
+                          >
+                            <Eye size={18} className="text-slate-600" />
+                          </button>
+
+                          <button
+                            onClick={() => updateStatus(request.id, "approved")}
+                            className="rounded-lg p-2 hover:bg-green-50"
+                            title="Approuver"
+                          >
+                            <CheckCircle size={18} className="text-green-600" />
+                          </button>
+
+                          <button
+                            onClick={() => updateStatus(request.id, "rejected")}
+                            className="rounded-lg p-2 hover:bg-red-50"
+                            title="Refuser"
+                          >
+                            <XCircle size={18} className="text-red-600" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-slate-500">
+                      Aucune demande trouvée.
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-500">
-                    Aucune demande trouvée.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
+
+      {openDetailsModal && selectedRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-slate-800">
+                Détails de la Demande
+              </h2>
+
+              <button
+                onClick={() => {
+                  setOpenDetailsModal(false);
+                  setSelectedRequest(null);
+                }}
+                className="rounded-lg p-2 hover:bg-slate-100"
+              >
+                <X size={20} className="text-slate-600" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-sm text-slate-700">
+              <p><strong>Nom :</strong> {selectedRequest.full_name}</p>
+              <p><strong>Email :</strong> {selectedRequest.email}</p>
+              <p><strong>Téléphone :</strong> {selectedRequest.phone || "-"}</p>
+              <p><strong>Niveau :</strong> {selectedRequest.level_name || "-"}</p>
+              <p><strong>Statut :</strong> {getStatusText(selectedRequest.status)}</p>
+              <p><strong>Date :</strong> {formatDate(selectedRequest.created_at)}</p>
+              <p><strong>Message :</strong> {selectedRequest.message || "-"}</p>
+              {selectedRequest.rejection_reason && (
+                <p>
+                  <strong>Raison du refus :</strong> {selectedRequest.rejection_reason}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

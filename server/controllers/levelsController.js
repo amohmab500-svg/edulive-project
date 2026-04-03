@@ -6,10 +6,37 @@ const getLevels = (req, res) => {
 
   db.query(sql, (err, result) => {
     if (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({
+        message: "Failed to fetch levels",
+        error: err.message,
+      });
     }
 
     res.status(200).json(result);
+  });
+};
+
+// GET single level by id
+const getLevelById = (req, res) => {
+  const { id } = req.params;
+
+  const sql = "SELECT * FROM levels WHERE id = ? LIMIT 1";
+
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      return res.status(500).json({
+        message: "Failed to fetch level",
+        error: err.message,
+      });
+    }
+
+    if (result.length === 0) {
+      return res.status(404).json({
+        message: "Level not found",
+      });
+    }
+
+    res.status(200).json(result[0]);
   });
 };
 
@@ -17,11 +44,20 @@ const getLevels = (req, res) => {
 const createLevel = (req, res) => {
   const { name, description, image } = req.body;
 
+  if (!name || name.trim() === "") {
+    return res.status(400).json({
+      message: "Level name is required",
+    });
+  }
+
   const sql = "INSERT INTO levels (name, description, image) VALUES (?, ?, ?)";
 
-  db.query(sql, [name, description, image], (err, result) => {
+  db.query(sql, [name, description || null, image || null], (err, result) => {
     if (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({
+        message: "Failed to create level",
+        error: err.message,
+      });
     }
 
     res.status(201).json({
@@ -36,11 +72,30 @@ const updateLevel = (req, res) => {
   const { id } = req.params;
   const { name, description, image } = req.body;
 
-  const sql = "UPDATE levels SET name = ?, description = ?, image = ? WHERE id = ?";
+  if (!name || name.trim() === "") {
+    return res.status(400).json({
+      message: "Level name is required",
+    });
+  }
 
-  db.query(sql, [name, description, image, id], (err, result) => {
+  const sql = `
+    UPDATE levels
+    SET name = ?, description = ?, image = ?
+    WHERE id = ?
+  `;
+
+  db.query(sql, [name, description || null, image || null, id], (err, result) => {
     if (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({
+        message: "Failed to update level",
+        error: err.message,
+      });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Level not found",
+      });
     }
 
     res.status(200).json({
@@ -57,7 +112,16 @@ const deleteLevel = (req, res) => {
 
   db.query(sql, [id], (err, result) => {
     if (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({
+        message: "Failed to delete level",
+        error: err.message,
+      });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Level not found",
+      });
     }
 
     res.status(200).json({
@@ -68,6 +132,7 @@ const deleteLevel = (req, res) => {
 
 module.exports = {
   getLevels,
+  getLevelById,
   createLevel,
   updateLevel,
   deleteLevel,

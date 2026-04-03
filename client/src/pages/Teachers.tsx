@@ -1,53 +1,51 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { Pencil, Trash2, Plus, X } from "lucide-react";
 
-const initialTeachers = [
-  {
-    id: 1,
-    photo: "https://picsum.photos/60?11",
-    fullName: "Ahmed Ben Ali",
-    email: "ahmed@edulive.com",
-    phone: "+216 22 111 111",
-    specialty: "Mathématiques",
-  },
-  {
-    id: 2,
-    photo: "https://picsum.photos/60?12",
-    fullName: "Salma Trabelsi",
-    email: "salma@edulive.com",
-    phone: "+216 23 222 222",
-    specialty: "Français",
-  },
-  {
-    id: 3,
-    photo: "https://picsum.photos/60?13",
-    fullName: "Youssef Gharbi",
-    email: "youssef@edulive.com",
-    phone: "+216 24 333 333",
-    specialty: "Anglais",
-  },
-];
+type Teacher = {
+  id: number;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  specialty: string | null;
+};
 
 export default function Teachers() {
-  const [teachersData, setTeachersData] = useState(initialTeachers);
+  const [teachersData, setTeachersData] = useState<Teacher[]>([]);
   const [openModal, setOpenModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    fullName: "",
+    name: "",
     email: "",
     phone: "",
     specialty: "",
-    photo: "",
   });
+
+  useEffect(() => {
+    fetchTeachers();
+  }, []);
+
+  const fetchTeachers = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get("http://localhost:5000/api/teachers");
+      setTeachersData(res.data);
+    } catch (error) {
+      console.error("Error fetching teachers:", error);
+      alert("Erreur lors du chargement des enseignants");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const resetForm = () => {
     setFormData({
-      fullName: "",
+      name: "",
       email: "",
       phone: "",
       specialty: "",
-      photo: "",
     });
     setEditingId(null);
   };
@@ -57,70 +55,62 @@ export default function Teachers() {
     setOpenModal(true);
   };
 
-  const handleOpenEditModal = (teacher: {
-    id: number;
-    fullName: string;
-    email: string;
-    phone: string;
-    specialty: string;
-    photo: string;
-  }) => {
+  const handleOpenEditModal = (teacher: Teacher) => {
     setEditingId(teacher.id);
     setFormData({
-      fullName: teacher.fullName,
-      email: teacher.email,
-      phone: teacher.phone,
-      specialty: teacher.specialty,
-      photo: teacher.photo,
+      name: teacher.name || "",
+      email: teacher.email || "",
+      phone: teacher.phone || "",
+      specialty: teacher.specialty || "",
     });
     setOpenModal(true);
   };
 
-  const handleSaveTeacher = () => {
-    if (!formData.fullName.trim() || !formData.email.trim()) {
-      alert("Veuillez remplir au moins le nom et l'email");
+  const handleSaveTeacher = async () => {
+    if (!formData.name.trim()) {
+      alert("Veuillez remplir au moins le nom");
       return;
     }
 
-    if (editingId !== null) {
-      setTeachersData((prev) =>
-        prev.map((teacher) =>
-          teacher.id === editingId
-            ? {
-                ...teacher,
-                fullName: formData.fullName,
-                email: formData.email,
-                phone: formData.phone || "-",
-                specialty: formData.specialty || "-",
-                photo: formData.photo || "https://picsum.photos/60",
-              }
-            : teacher
-        )
-      );
-    } else {
-      const teacherToAdd = {
-        id: Date.now(),
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone || "-",
-        specialty: formData.specialty || "-",
-        photo: formData.photo || "https://picsum.photos/60",
-      };
+    try {
+      if (editingId !== null) {
+        await axios.put(`http://localhost:5000/api/teachers/${editingId}`, {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          specialty: formData.specialty,
+        });
+      } else {
+        await axios.post("http://localhost:5000/api/teachers", {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          specialty: formData.specialty,
+        });
+      }
 
-      setTeachersData((prev) => [...prev, teacherToAdd]);
+      await fetchTeachers();
+      setOpenModal(false);
+      resetForm();
+    } catch (error) {
+      console.error("Error saving teacher:", error);
+      alert("Erreur lors de l'enregistrement de l'enseignant");
     }
-
-    setOpenModal(false);
-    resetForm();
   };
 
-  const handleDeleteTeacher = (id: number) => {
+  const handleDeleteTeacher = async (id: number) => {
     const confirmed = window.confirm(
       "Voulez-vous vraiment supprimer cet enseignant ?"
     );
     if (!confirmed) return;
 
-    setTeachersData((prev) => prev.filter((teacher) => teacher.id !== id));
+    try {
+      await axios.delete(`http://localhost:5000/api/teachers/${id}`);
+      await fetchTeachers();
+    } catch (error) {
+      console.error("Error deleting teacher:", error);
+      alert("Erreur lors de la suppression de l'enseignant");
+    }
   };
 
   return (
@@ -149,55 +139,50 @@ export default function Teachers() {
           Enseignants ({teachersData.length})
         </h2>
 
-        <table className="w-full">
-          <thead className="border-b text-left text-sm text-slate-500">
-            <tr>
-              <th className="pb-3">Photo</th>
-              <th className="pb-3">Nom</th>
-              <th className="pb-3">Email</th>
-              <th className="pb-3">Téléphone</th>
-              <th className="pb-3">Spécialité</th>
-              <th className="pb-3 text-right">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody className="divide-y">
-            {teachersData.map((teacher) => (
-              <tr key={teacher.id} className="h-20">
-                <td className="py-3">
-                  <img
-                    src={teacher.photo}
-                    alt={teacher.fullName}
-                    className="h-14 w-14 rounded-lg object-cover"
-                  />
-                </td>
-
-                <td className="font-medium text-slate-800">{teacher.fullName}</td>
-                <td className="text-slate-600">{teacher.email}</td>
-                <td className="text-slate-600">{teacher.phone}</td>
-                <td className="text-slate-600">{teacher.specialty}</td>
-
-                <td className="text-right">
-                  <div className="flex justify-end gap-3">
-                    <button
-                      onClick={() => handleOpenEditModal(teacher)}
-                      className="rounded-lg p-2 hover:bg-slate-100"
-                    >
-                      <Pencil size={18} className="text-slate-600" />
-                    </button>
-
-                    <button
-                      onClick={() => handleDeleteTeacher(teacher.id)}
-                      className="rounded-lg p-2 hover:bg-red-50"
-                    >
-                      <Trash2 size={18} className="text-red-500" />
-                    </button>
-                  </div>
-                </td>
+        {loading ? (
+          <p className="text-slate-500">Chargement...</p>
+        ) : (
+          <table className="w-full">
+            <thead className="border-b text-left text-sm text-slate-500">
+              <tr>
+                <th className="pb-3">Nom</th>
+                <th className="pb-3">Email</th>
+                <th className="pb-3">Téléphone</th>
+                <th className="pb-3">Spécialité</th>
+                <th className="pb-3 text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody className="divide-y">
+              {teachersData.map((teacher) => (
+                <tr key={teacher.id} className="h-20">
+                  <td className="font-medium text-slate-800">{teacher.name}</td>
+                  <td className="text-slate-600">{teacher.email || "-"}</td>
+                  <td className="text-slate-600">{teacher.phone || "-"}</td>
+                  <td className="text-slate-600">{teacher.specialty || "-"}</td>
+
+                  <td className="text-right">
+                    <div className="flex justify-end gap-3">
+                      <button
+                        onClick={() => handleOpenEditModal(teacher)}
+                        className="rounded-lg p-2 hover:bg-slate-100"
+                      >
+                        <Pencil size={18} className="text-slate-600" />
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteTeacher(teacher.id)}
+                        className="rounded-lg p-2 hover:bg-red-50"
+                      >
+                        <Trash2 size={18} className="text-red-500" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {openModal && (
@@ -228,9 +213,9 @@ export default function Teachers() {
                 </label>
                 <input
                   type="text"
-                  value={formData.fullName}
+                  value={formData.name}
                   onChange={(e) =>
-                    setFormData({ ...formData, fullName: e.target.value })
+                    setFormData({ ...formData, name: e.target.value })
                   }
                   placeholder="Nom complet"
                   className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500"
@@ -278,21 +263,6 @@ export default function Teachers() {
                     setFormData({ ...formData, specialty: e.target.value })
                   }
                   placeholder="Mathématiques"
-                  className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Photo URL
-                </label>
-                <input
-                  type="text"
-                  value={formData.photo}
-                  onChange={(e) =>
-                    setFormData({ ...formData, photo: e.target.value })
-                  }
-                  placeholder="https://example.com/photo.jpg"
                   className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500"
                 />
               </div>
