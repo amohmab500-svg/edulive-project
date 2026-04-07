@@ -20,12 +20,15 @@ const teachersRoutes = require("./routes/teachers");
 const studentsRoutes = require("./routes/students");
 const groupsRoutes = require("./routes/groups");
 const registrationsRoutes = require("./routes/registrations");
+const resourcesRoutes = require("./routes/resources");
+
 
 app.use("/api/levels", levelsRoutes);
 app.use("/api/teachers", teachersRoutes);
 app.use("/api/students", studentsRoutes);
 app.use("/api/groups", groupsRoutes);
 app.use("/api/registrations", registrationsRoutes);
+app.use("/api/resources", resourcesRoutes);
 
 app.get("/", (req, res) => {
   res.send("EduLive API is running...");
