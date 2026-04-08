@@ -1,447 +1,133 @@
 import React, { useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
-
-type TabType = "contact" | "reseaux" | "accueil" | "sections" | "avis";
+import { Save, Plus, Pencil, Trash2, Globe, MessageSquare, Layout } from "lucide-react";
 
 export default function Settings() {
-  const [activeTab, setActiveTab] = useState<TabType>("contact");
+  const [activeTab, setActiveTab] = useState("contact");
 
-  const [contactData, setContactData] = useState({
-    mainPhone: "+216 25 105 711",
-    secondaryPhone: "+216 12 345 678",
-    email: "salma@educentre.tn",
-    address: "Tunisie",
-  });
-
-  const [socialLinks, setSocialLinks] = useState([
-    {
-      id: 1,
-      icon: "Facebook",
-      name: "EduCentre",
-      url: "https://www.facebook.com/educentre.tn",
-      order: 1,
-    },
-    {
-      id: 2,
-      icon: "Instagram",
-      name: "EduCentre",
-      url: "https://www.instagram.com/educentre.tn",
-      order: 2,
-    },
-  ]);
-
-  const [homeData, setHomeData] = useState({
-    headerLogo: "",
-    footerLogo: "",
-    headerLogoHeight: "48",
-    footerLogoHeight: "170",
-  });
-
-  const [sections, setSections] = useState([
-    {
-      id: 1,
-      image: "🎥",
-      title: "Enregistrez vos visioconférences en toute simplicité",
-      subtitle: "Enregistrement",
-      order: 1,
-      status: "Active",
-    },
-    {
-      id: 2,
-      image: "📚",
-      title: "Partagez vos ressources pédagogiques avec vos classes",
-      subtitle: "Partagez des livres et des documents",
-      order: 2,
-      status: "Active",
-    },
-  ]);
-
-  const [reviews, setReviews] = useState([
-    {
-      id: 1,
-      name: "Ahmed",
-      comment: "Très bonne plateforme",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Salma",
-      comment: "Interface simple et pratique",
-      status: "Active",
-    },
-  ]);
-
-  const handleDeleteSocial = (id: number) => {
-    const confirmed = window.confirm("Supprimer ce lien ?");
-    if (!confirmed) return;
-    setSocialLinks((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const handleDeleteSection = (id: number) => {
-    const confirmed = window.confirm("Supprimer cette section ?");
-    if (!confirmed) return;
-    setSections((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const handleDeleteReview = (id: number) => {
-    const confirmed = window.confirm("Supprimer cet avis ?");
-    if (!confirmed) return;
-    setReviews((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const tabClass = (tab: TabType) =>
-    `flex-1 rounded-xl px-4 py-3 text-sm font-medium transition ${
+  // تنسيق التبويبات (نفس شكل صورة المشرف)
+  const tabClass = (tab) =>
+    `flex-1 py-3 text-sm font-medium transition-all ${
       activeTab === tab
-        ? "bg-white text-slate-900 shadow-sm"
-        : "text-slate-500 hover:text-slate-800"
+        ? "bg-white text-blue-600 shadow-sm rounded-lg"
+        : "text-slate-500 hover:text-slate-700"
     }`;
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">
-          Paramètres du Site
-        </h1>
-        <p className="mt-1 text-slate-500">
-          Gérez tous les paramètres de votre site web
-        </p>
+        <h1 className="text-2xl font-bold text-slate-900">Paramètres du Site</h1>
+        <p className="text-slate-500">Gérez tous les paramètres de votre site web</p>
       </div>
 
-      <div className="flex rounded-2xl bg-slate-100 p-1">
-        <button onClick={() => setActiveTab("contact")} className={tabClass("contact")}>
-          Contact
-        </button>
-        <button onClick={() => setActiveTab("reseaux")} className={tabClass("reseaux")}>
-          Réseaux
-        </button>
-        <button onClick={() => setActiveTab("accueil")} className={tabClass("accueil")}>
-          Accueil
-        </button>
-        <button onClick={() => setActiveTab("sections")} className={tabClass("sections")}>
-          Sections
-        </button>
-        <button onClick={() => setActiveTab("avis")} className={tabClass("avis")}>
-          Avis
-        </button>
+      {/* Tabs Container */}
+      <div className="flex bg-slate-100 p-1.5 rounded-xl w-full">
+        <button onClick={() => setActiveTab("contact")} className={tabClass("contact")}>Contact</button>
+        <button onClick={() => setActiveTab("reseaux")} className={tabClass("reseaux")}>Réseaux</button>
+        <button onClick={() => setActiveTab("accueil")} className={tabClass("accueil")}>Accueil</button>
+        <button onClick={() => setActiveTab("sections")} className={tabClass("sections")}>Sections</button>
+        <button onClick={() => setActiveTab("avis")} className={tabClass("avis")}>Avis</button>
       </div>
 
-      {activeTab === "contact" && (
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-semibold text-slate-900">
-            Informations de Contact
-          </h2>
-          <p className="mt-1 text-slate-500">
-            Gérez les coordonnées affichées sur le site
-          </p>
-
-          <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Téléphone Principal
-              </label>
-              <input
-                type="text"
-                value={contactData.mainPhone}
-                onChange={(e) =>
-                  setContactData({ ...contactData, mainPhone: e.target.value })
-                }
-                className="w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-blue-500"
-              />
+      {/* Content Area */}
+      <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+        
+        {/* 1. Contact Tab */}
+        {activeTab === "contact" && (
+          <div className="space-y-6">
+            <h2 className="text-lg font-bold">Informations de Contact</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Téléphone Principal</label>
+                <input type="text" className="w-full p-3 border rounded-xl bg-slate-50" placeholder="+216..." />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Email</label>
+                <input type="email" className="w-full p-3 border rounded-xl bg-slate-50" placeholder="admin@example.com" />
+              </div>
+              <div className="col-span-2 space-y-2">
+                <label className="text-sm font-medium">Adresse</label>
+                <textarea className="w-full p-3 border rounded-xl bg-slate-50" rows="3"></textarea>
+              </div>
             </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Téléphone Secondaire
-              </label>
-              <input
-                type="text"
-                value={contactData.secondaryPhone}
-                onChange={(e) =>
-                  setContactData({
-                    ...contactData,
-                    secondaryPhone: e.target.value,
-                  })
-                }
-                className="w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <label className="mb-2 block text-sm font-medium text-slate-700">
-              Email
-            </label>
-            <input
-              type="email"
-              value={contactData.email}
-              onChange={(e) =>
-                setContactData({ ...contactData, email: e.target.value })
-              }
-              className="w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-blue-500"
-            />
-          </div>
-
-          <div className="mt-6">
-            <label className="mb-2 block text-sm font-medium text-slate-700">
-              Adresse
-            </label>
-            <textarea
-              value={contactData.address}
-              onChange={(e) =>
-                setContactData({ ...contactData, address: e.target.value })
-              }
-              rows={4}
-              className="w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-blue-500"
-            />
-          </div>
-
-          <button className="mt-6 rounded-xl bg-blue-500 px-5 py-3 text-white hover:bg-blue-600">
-            Enregistrer
-          </button>
-        </div>
-      )}
-
-      {activeTab === "reseaux" && (
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold text-slate-900">
-                Réseaux Sociaux
-              </h2>
-              <p className="mt-1 text-slate-500">
-                Gérez les liens vers vos réseaux sociaux
-              </p>
-            </div>
-
-            <button className="flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-3 text-white hover:bg-blue-600">
-              <Plus size={18} />
-              Nouveau Lien
+            <button className="bg-blue-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:bg-blue-700">
+              <Save size={18} /> Enregistrer
             </button>
           </div>
+        )}
 
-          <table className="w-full">
-            <thead className="border-b text-left text-sm text-slate-500">
-              <tr>
-                <th className="pb-3">Icône</th>
-                <th className="pb-3">Nom</th>
-                <th className="pb-3">URL</th>
-                <th className="pb-3">Ordre</th>
-                <th className="pb-3 text-right">Actions</th>
-              </tr>
-            </thead>
+                  
+        {activeTab === "reseaux" && (
+  <div className="space-y-6">
+    <div className="flex justify-between items-center">
+      <div>
+        <h2 className="text-lg font-bold text-slate-800">Réseaux Sociaux</h2>
+        <p className="text-sm text-slate-500">Gérez les liens vers vos réseaux sociaux</p>
+      </div>
+      <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm transition-all shadow-sm">
+        <Plus size={18} /> Nouveau Lien
+      </button>
+    </div>
+    
+    <div className="border border-slate-100 rounded-2xl overflow-hidden">
+      <table className="w-full text-left">
+        <thead className="bg-slate-50 border-b border-slate-100">
+          <tr className="text-slate-500 text-xs uppercase tracking-wider">
+            <th className="px-6 py-4 font-semibold">Icône</th>
+            <th className="px-6 py-4 font-semibold">Nom</th>
+            <th className="px-6 py-4 font-semibold">URL</th>
+            <th className="px-6 py-4 font-semibold text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          <tr className="hover:bg-slate-50/50 transition-colors">
+            <td className="px-6 py-4">
+              <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                <Globe size={20} />
+              </div>
+            </td>
+            <td className="px-6 py-4 font-medium text-slate-700">Facebook</td>
+            <td className="px-6 py-4 text-slate-500 text-sm">https://facebook.com/edulive</td>
+            <td className="px-6 py-4">
+              <div className="flex justify-center gap-2">
+                <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                  <Pencil size={16} />
+                </button>
+                <button className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
 
-            <tbody className="divide-y">
-              {socialLinks.map((item) => (
-                <tr key={item.id} className="h-20">
-                  <td>{item.icon}</td>
-                  <td className="font-medium text-slate-800">{item.name}</td>
-                  <td className="text-slate-600">{item.url}</td>
-                  <td className="text-slate-600">{item.order}</td>
-                  <td className="text-right">
-                    <div className="flex justify-end gap-3">
-                      <button className="rounded-lg p-2 hover:bg-slate-100">
-                        <Pencil size={18} className="text-slate-600" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteSocial(item.id)}
-                        className="rounded-lg p-2 hover:bg-red-50"
-                      >
-                        <Trash2 size={18} className="text-red-500" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {activeTab === "accueil" && (
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-semibold text-slate-900">Logos du Site</h2>
-          <p className="mt-1 text-slate-500">
-            Personnalisez les logos de l'en-tête et du pied de page
-          </p>
-
-          <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 p-4">
-              <h3 className="font-semibold text-slate-800">
-                Logo de l'En-tête (Topbar)
-              </h3>
-
-              <label className="mt-4 block text-sm font-medium text-slate-700">
-                Logo de l'en-tête
-              </label>
-              <input
-                type="file"
-                className="mt-2 w-full rounded-xl border border-slate-300 p-3"
-              />
-
-              <label className="mt-4 block text-sm font-medium text-slate-700">
-                Hauteur du logo (px)
-              </label>
-              <input
-                type="text"
-                value={homeData.headerLogoHeight}
-                onChange={(e) =>
-                  setHomeData({ ...homeData, headerLogoHeight: e.target.value })
-                }
-                className="mt-2 w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 p-4">
-              <h3 className="font-semibold text-slate-800">
-                Logo du Pied de Page (Footer)
-              </h3>
-
-              <label className="mt-4 block text-sm font-medium text-slate-700">
-                Logo du pied de page
-              </label>
-              <input
-                type="file"
-                className="mt-2 w-full rounded-xl border border-slate-300 p-3"
-              />
-
-              <label className="mt-4 block text-sm font-medium text-slate-700">
-                Hauteur du logo (px)
-              </label>
-              <input
-                type="text"
-                value={homeData.footerLogoHeight}
-                onChange={(e) =>
-                  setHomeData({ ...homeData, footerLogoHeight: e.target.value })
-                }
-                className="mt-2 w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-blue-500"
-              />
-            </div>
+        {/* 3. Accueil (Logos) */}
+        {activeTab === "accueil" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <div className="space-y-4">
+                <h3 className="font-bold">Logo de l'En-tête</h3>
+                <div className="border-2 border-dashed border-slate-200 rounded-2xl p-10 flex flex-col items-center">
+                   <div className="w-32 h-12 bg-slate-100 rounded mb-4 flex items-center justify-center text-xs text-slate-400">Preview</div>
+                   <input type="file" className="text-xs" />
+                </div>
+             </div>
+             <div className="space-y-4">
+                <h3 className="font-bold">Logo du Pied de Page</h3>
+                <div className="border-2 border-dashed border-slate-200 rounded-2xl p-10 flex flex-col items-center">
+                   <div className="w-20 h-20 bg-slate-100 rounded-full mb-4 flex items-center justify-center text-xs text-slate-400">Preview</div>
+                   <input type="file" className="text-xs" />
+                </div>
+             </div>
           </div>
+        )}
 
-          <button className="mt-6 rounded-xl bg-blue-500 px-5 py-3 text-white hover:bg-blue-600">
-            Enregistrer les logos
-          </button>
-        </div>
-      )}
+        {/* يمكنك إضافة محتوى Sections و Avis بنفس نمط الجدول أعلاه */}
 
-      {activeTab === "sections" && (
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold text-slate-900">
-                Sections Personnalisées
-              </h2>
-              <p className="mt-1 text-slate-500">
-                Créez des sections personnalisées pour votre page d'accueil
-              </p>
-            </div>
-
-            <button className="flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-3 text-white hover:bg-blue-600">
-              <Plus size={18} />
-              Section
-            </button>
-          </div>
-
-          <table className="w-full">
-            <thead className="border-b text-left text-sm text-slate-500">
-              <tr>
-                <th className="pb-3">Image</th>
-                <th className="pb-3">Titre</th>
-                <th className="pb-3">Ordre</th>
-                <th className="pb-3">Statut</th>
-                <th className="pb-3 text-right">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y">
-              {sections.map((section) => (
-                <tr key={section.id} className="h-20">
-                  <td className="text-2xl">{section.image}</td>
-                  <td>
-                    <p className="font-medium text-slate-800">{section.title}</p>
-                    <p className="text-sm text-slate-500">{section.subtitle}</p>
-                  </td>
-                  <td className="text-slate-600">{section.order}</td>
-                  <td>
-                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs text-green-700">
-                      {section.status}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    <div className="flex justify-end gap-3">
-                      <button className="rounded-lg p-2 hover:bg-slate-100">
-                        <Pencil size={18} className="text-slate-600" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteSection(section.id)}
-                        className="rounded-lg p-2 hover:bg-red-50"
-                      >
-                        <Trash2 size={18} className="text-red-500" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {activeTab === "avis" && (
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold text-slate-900">Avis</h2>
-              <p className="mt-1 text-slate-500">
-                Gérez les avis affichés sur votre site
-              </p>
-            </div>
-
-            <button className="flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-3 text-white hover:bg-blue-600">
-              <Plus size={18} />
-              Nouvel Avis
-            </button>
-          </div>
-
-          <table className="w-full">
-            <thead className="border-b text-left text-sm text-slate-500">
-              <tr>
-                <th className="pb-3">Nom</th>
-                <th className="pb-3">Commentaire</th>
-                <th className="pb-3">Statut</th>
-                <th className="pb-3 text-right">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y">
-              {reviews.map((review) => (
-                <tr key={review.id} className="h-20">
-                  <td className="font-medium text-slate-800">{review.name}</td>
-                  <td className="text-slate-600">{review.comment}</td>
-                  <td>
-                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs text-green-700">
-                      {review.status}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    <div className="flex justify-end gap-3">
-                      <button className="rounded-lg p-2 hover:bg-slate-100">
-                        <Pencil size={18} className="text-slate-600" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteReview(review.id)}
-                        className="rounded-lg p-2 hover:bg-red-50"
-                      >
-                        <Trash2 size={18} className="text-red-500" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

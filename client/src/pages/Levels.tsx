@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Pencil, Trash2, Plus, X } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Layers, BookOpen, GraduationCap } from "lucide-react";
 
 type Level = {
   id: number;
@@ -29,30 +29,20 @@ export default function Levels() {
     try {
       setLoading(true);
       const res = await axios.get("http://localhost:5000/api/levels");
-       console.log("LEVELS API RESPONSE:", res.data);
-
       setLevelsData(res.data);
     } catch (error) {
       console.error("Error fetching levels:", error);
-      alert("Erreur lors du chargement des niveaux");
     } finally {
       setLoading(false);
     }
   };
 
   const resetForm = () => {
-    setFormData({
-      name: "",
-      description: "",
-      image: "",
-    });
+    setFormData({ name: "", description: "", image: "" });
     setEditingId(null);
   };
 
-  const handleOpenAddModal = () => {
-    resetForm();
-    setOpenModal(true);
-  };
+  const handleOpenAddModal = () => { resetForm(); setOpenModal(true); };
 
   const handleOpenEditModal = (level: Level) => {
     setEditingId(level.id);
@@ -65,134 +55,109 @@ export default function Levels() {
   };
 
   const handleSaveLevel = async () => {
-    if (!formData.name.trim()) {
-      alert("Veuillez entrer le nom du niveau");
-      return;
-    }
-
+    if (!formData.name.trim()) return alert("Veuillez entrer le nom");
     try {
       if (editingId !== null) {
-        await axios.put(`http://localhost:5000/api/levels/${editingId}`, {
-          name: formData.name,
-          description: formData.description,
-          image: formData.image,
-        });
+        await axios.put(`http://localhost:5000/api/levels/${editingId}`, formData);
       } else {
-        await axios.post("http://localhost:5000/api/levels", {
-          name: formData.name,
-          description: formData.description,
-          image: formData.image,
-        });
+        await axios.post("http://localhost:5000/api/levels", formData);
       }
-
-      await fetchLevels();
+      fetchLevels();
       setOpenModal(false);
-      resetForm();
-    } catch (error) {
-      console.error("Error saving level:", error);
-      alert("Erreur lors de l'enregistrement du niveau");
-    }
+    } catch (error) { console.error(error); }
   };
 
   const handleDeleteLevel = async (id: number) => {
-    const confirmed = window.confirm(
-      "Voulez-vous vraiment supprimer ce niveau ?"
-    );
-    if (!confirmed) return;
-
-    try {
-      await axios.delete(`http://localhost:5000/api/levels/${id}`);
-      await fetchLevels();
-    } catch (error) {
-      console.error("Error deleting level:", error);
-      alert("Erreur lors de la suppression du niveau");
+    if (window.confirm("Supprimer ce niveau ?")) {
+      try {
+        await axios.delete(`http://localhost:5000/api/levels/${id}`);
+        fetchLevels();
+      } catch (error) { console.error(error); }
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+      
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            Gestion des Niveaux
-          </h1>
-          <p className="mt-1 text-slate-500">
-            Gérez les niveaux et leurs matières
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Gestion des Niveaux</h1>
+          <p className="text-slate-500 mt-1 flex items-center gap-2">
+            <GraduationCap size={18} /> Configurez les parcours scolaires et les niveaux
           </p>
         </div>
-
         <button
           onClick={handleOpenAddModal}
-          className="flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-3 text-white hover:bg-blue-600"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl flex items-center gap-2 shadow-lg shadow-blue-200 transition-all hover:scale-[1.02]"
         >
-          <Plus size={18} />
-          Nouveau Niveau
+          <Plus size={20} />
+          <span>Nouveau Niveau</span>
         </button>
       </div>
 
-      <div className="flex gap-3">
-        <button className="rounded-xl bg-slate-200 px-4 py-2 font-medium">
-          Niveaux
+      {/* Tabs Filter (Style المشرف) */}
+      <div className="flex bg-slate-100 p-1.5 rounded-2xl w-fit">
+        <button className="bg-white text-blue-600 px-6 py-2.5 rounded-xl shadow-sm font-semibold text-sm flex items-center gap-2">
+          <Layers size={16} /> Niveaux
         </button>
-
-        <button className="rounded-xl bg-slate-100 px-4 py-2 text-slate-500">
-          Classes
+        <button className="text-slate-500 px-6 py-2.5 font-medium text-sm flex items-center gap-2 hover:text-slate-700 transition">
+          <GraduationCap size={16} /> Classes
         </button>
-
-        <button className="rounded-xl bg-slate-100 px-4 py-2 text-slate-500">
-          Matières
+        <button className="text-slate-500 px-6 py-2.5 font-medium text-sm flex items-center gap-2 hover:text-slate-700 transition">
+          <BookOpen size={16} /> Matières
         </button>
       </div>
 
-      <div className="rounded-2xl bg-white p-6 shadow-sm">
-        <h2 className="mb-6 text-xl font-semibold text-slate-800">
-          Niveaux ({levelsData.length})
+      {/* Table Container */}
+      <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-50">
+        <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+           Liste des Niveaux <span className="text-sm font-normal text-slate-400 bg-slate-100 px-3 py-1 rounded-full">{levelsData.length}</span>
         </h2>
 
-        {loading ? (
-          <p className="text-slate-500">Chargement...</p>
-        ) : (
-          <table className="w-full">
-            <thead className="border-b text-left text-sm text-slate-500">
-              <tr>
-                <th className="pb-3">Image</th>
-                <th className="pb-3">Nom</th>
-                <th className="pb-3">Description</th>
-                <th className="pb-3 text-right">Actions</th>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-slate-50 text-slate-400 text-xs uppercase tracking-widest">
+                <th className="px-4 py-4 font-semibold">Aperçu</th>
+                <th className="px-4 py-4 font-semibold">Nom du Niveau</th>
+                <th className="px-4 py-4 font-semibold">Description</th>
+                <th className="px-4 py-4 font-semibold text-right">Actions</th>
               </tr>
             </thead>
-
-            <tbody className="divide-y">
-              {levelsData.map((level) => (
-                <tr key={level.id} className="h-20">
-                  <td className="py-3">
-                    <img
-                      src={level.image || "https://picsum.photos/60"}
-                      alt={level.name}
-                      className="h-14 w-14 rounded-lg object-cover"
-                    />
+            <tbody className="divide-y divide-slate-50">
+              {loading ? (
+                 <tr><td colSpan={4} className="py-10 text-center text-slate-400">Chargement en cours...</td></tr>
+              ) : levelsData.map((level) => (
+                <tr key={level.id} className="group hover:bg-slate-50/50 transition-all">
+                  <td className="py-5 px-4">
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden ring-4 ring-slate-50 group-hover:ring-blue-50 transition-all shadow-sm">
+                      <img
+                        src={level.image || `https://ui-avatars.com/api/?name=${level.name}&background=random`}
+                        alt={level.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   </td>
-
-                  <td className="font-medium text-slate-800">{level.name}</td>
-
-                  <td className="text-slate-500">
-                    {level.description || "-"}
+                  <td className="px-4">
+                    <span className="font-bold text-slate-700 text-lg">{level.name}</span>
                   </td>
-
-                  <td className="text-right">
-                    <div className="flex justify-end gap-3">
-                      <button
+                  <td className="px-4 max-w-xs">
+                    <p className="text-slate-500 text-sm line-clamp-2">{level.description || "Aucune description"}</p>
+                  </td>
+                  <td className="px-4 text-right">
+                    <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
                         onClick={() => handleOpenEditModal(level)}
-                        className="rounded-lg p-2 hover:bg-slate-100"
+                        className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
                       >
-                        <Pencil size={18} className="text-slate-600" />
+                        <Pencil size={18} />
                       </button>
-
-                      <button
+                      <button 
                         onClick={() => handleDeleteLevel(level.id)}
-                        className="rounded-lg p-2 hover:bg-red-50"
+                        className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm"
                       >
-                        <Trash2 size={18} className="text-red-500" />
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   </td>
@@ -200,82 +165,59 @@ export default function Levels() {
               ))}
             </tbody>
           </table>
-        )}
+        </div>
       </div>
 
+      {/* Modal - تصميم عصري */}
       {openModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-slate-800">
-                {editingId !== null ? "Modifier le Niveau" : "Ajouter un Niveau"}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md rounded-[2rem] bg-white p-8 shadow-2xl animate-in zoom-in duration-300">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold text-slate-800">
+                {editingId !== null ? "Modifier le Niveau" : "Nouveau Niveau"}
               </h2>
-
-              <button
-                onClick={() => {
-                  setOpenModal(false);
-                  resetForm();
-                }}
-                className="rounded-lg p-2 hover:bg-slate-100"
-              >
-                <X size={20} className="text-slate-600" />
-              </button>
+              <button onClick={() => setOpenModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition"><X size={24} /></button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Nom du niveau
-                </label>
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-600 ml-1 uppercase tracking-tighter">Nom</label>
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder="Ex: BTP"
-                  className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500"
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 outline-none focus:border-blue-500 focus:bg-white transition-all"
+                  placeholder="Ex: 7ème année"
                 />
               </div>
 
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Description
-                </label>
-                <input
-                  type="text"
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-600 ml-1 uppercase tracking-tighter">Description</label>
+                <textarea
                   value={formData.description}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      description: e.target.value,
-                    })
-                  }
-                  placeholder="Description du niveau"
-                  className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500"
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 outline-none focus:border-blue-500 focus:bg-white transition-all"
+                  rows={3}
+                  placeholder="Description du niveau..."
                 />
               </div>
 
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Image URL
-                </label>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-600 ml-1 uppercase tracking-tighter">URL Image</label>
                 <input
                   type="text"
                   value={formData.image}
-                  onChange={(e) =>
-                    setFormData({ ...formData, image: e.target.value })
-                  }
-                  placeholder="https://example.com/image.jpg"
-                  className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500"
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 outline-none focus:border-blue-500 focus:bg-white transition-all"
+                  placeholder="https://..."
                 />
               </div>
 
               <button
                 onClick={handleSaveLevel}
-                className="w-full rounded-lg bg-blue-500 py-3 font-medium text-white hover:bg-blue-600"
+                className="w-full rounded-2xl bg-blue-600 py-4 font-bold text-white shadow-lg shadow-blue-200 hover:bg-blue-700 hover:scale-[1.01] transition-all mt-4"
               >
-                {editingId !== null ? "Mettre à jour" : "Ajouter"}
+                {editingId !== null ? "Mettre à jour" : "Créer le niveau"}
               </button>
             </div>
           </div>
