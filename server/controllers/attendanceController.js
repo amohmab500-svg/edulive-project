@@ -1,6 +1,5 @@
 const db = require("../db");
 
-// جلب الحضور حسب group و date
 const getAttendance = (req, res) => {
   const { group_id, date } = req.query;
 
@@ -9,11 +8,11 @@ const getAttendance = (req, res) => {
   }
 
   const sql = `
-    SELECT a.*, s.full_name as student_name
+    SELECT a.*, s.name AS student_name
     FROM attendance a
     JOIN students s ON a.student_id = s.id
     WHERE a.group_id = ? AND a.attendance_date = ?
-    ORDER BY s.full_name
+    ORDER BY s.name
   `;
 
   db.query(sql, [group_id, date], (err, results) => {
@@ -22,14 +21,13 @@ const getAttendance = (req, res) => {
   });
 };
 
-// جلب طلاب المجموعة (لتهيئة قائمة الحضور)
 const getGroupStudents = (req, res) => {
   const { group_id } = req.params;
 
   const sql = `
-    SELECT id, full_name, email FROM students
+    SELECT id, name AS full_name, email FROM students
     WHERE group_id = ?
-    ORDER BY full_name
+    ORDER BY name
   `;
 
   db.query(sql, [group_id], (err, results) => {
@@ -38,23 +36,19 @@ const getGroupStudents = (req, res) => {
   });
 };
 
-// حفظ الحضور (insert أو update)
 const saveAttendance = (req, res) => {
   const { group_id, date, attendance } = req.body;
-  // attendance = [{ student_id, status }]
 
   if (!group_id || !date || !attendance || attendance.length === 0) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  // نحذف السجلات القديمة لنفس المجموعة والتاريخ
   db.query(
     `DELETE FROM attendance WHERE group_id = ? AND attendance_date = ?`,
     [group_id, date],
     (err) => {
       if (err) return res.status(500).json({ error: err.message });
 
-      // نضيف السجلات الجديدة
       const values = attendance.map((a) => [
         a.student_id,
         group_id,
@@ -74,7 +68,6 @@ const saveAttendance = (req, res) => {
   );
 };
 
-// تاريخ الحضور لمجموعة معينة
 const getAttendanceHistory = (req, res) => {
   const { group_id } = req.params;
 

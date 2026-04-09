@@ -11,6 +11,7 @@ export default function AdminLayout() {
     { to: "/resources", label: "Ressources" },
     { to: "/messages", label: "Messagerie" },
     { to: "/contact-messages", label: "Messages Contact" },
+    { to: "/attendance", label: "Présences" },
     { to: "/profile", label: "Mon profil" },
     { to: "/settings", label: "Paramètres" },
   ];
@@ -43,7 +44,7 @@ export default function AdminLayout() {
           <p className="text-sm text-slate-500">Bienvenue, EduLive</p>
 
           <div className="flex items-center gap-6 text-sm font-medium text-slate-700">
-            <button className="hover:text-slate-900">Mon Profil</button>
+            <NavLink to="/profile" className="hover:text-slate-900">Mon Profil</NavLink>
             <button className="hover:text-slate-900">Déconnexion</button>
           </div>
         </header>

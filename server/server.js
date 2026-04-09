@@ -27,7 +27,8 @@ const contactMessagesRoutes = require("./routes/contactMessages");
 const settingsRoutes = require('./routes/settingsRoutes');
 const profileRoutes = require("./routes/profile");
 const attendanceRoutes = require("./routes/attendance");
-
+const authRoutes = require("./routes/auth");
+const dashboardRoutes = require("./routes/dashboard");
 
 
 
@@ -42,6 +43,8 @@ app.use("/api/contact-messages", contactMessagesRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/attendance", attendanceRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // ... باقي المسارات مثل app.use("/api/levels", ...) ...
 

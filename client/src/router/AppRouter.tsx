@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminLayout from "../layout/AdminLayout";
-import RegistrationRequests from "../pages/RegistrationRequests";
-
+import ProtectedRoute from "../components/ProtectedRoute";
+import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
 import Levels from "../pages/Levels";
 import Teachers from "../pages/Teachers";
@@ -12,13 +12,22 @@ import Messages from "../pages/Messages";
 import ContactMessages from "../pages/ContactMessages";
 import Settings from "../pages/Settings";
 import Profile from "../pages/Profile";
+import Attendance from "../pages/Attendance";
+import RegistrationRequests from "../pages/RegistrationRequests";
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="registration-requests" element={<RegistrationRequests />} />
-        <Route path="/" element={<AdminLayout />}>
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<Dashboard />} />
           <Route path="levels" element={<Levels />} />
           <Route path="teachers" element={<Teachers />} />
@@ -29,6 +38,8 @@ export default function AppRouter() {
           <Route path="contact-messages" element={<ContactMessages />} />
           <Route path="settings" element={<Settings />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="attendance" element={<Attendance />} />
+          <Route path="registration-requests" element={<RegistrationRequests />} />
         </Route>
       </Routes>
     </BrowserRouter>
