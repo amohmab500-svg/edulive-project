@@ -1,13 +1,12 @@
 const db = require("../db");
 
-// 1. جلب الإحصائيات
 const getStats = (req, res) => {
     const sql = `
         SELECT 
             (SELECT COUNT(*) FROM students) as students,
             (SELECT COUNT(*) FROM teachers) as teachers,
             (SELECT COUNT(*) FROM groups_table) as classes,
-            (SELECT COUNT(*) FROM registrations WHERE status = 'En attente') as pendingRequests
+            (SELECT COUNT(*) FROM registrations WHERE status = 'pending') as pendingRequests
     `;
     db.query(sql, (err, results) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -15,16 +14,20 @@ const getStats = (req, res) => {
     });
 };
 
-// 2. جلب الطلبات المعلقة
 const getRecentRegistrations = (req, res) => {
-    const sql = "SELECT * FROM registrations WHERE status = 'En attente' ORDER BY id DESC";
+    const sql = `
+        SELECT r.*, l.name as course 
+        FROM registrations r
+        LEFT JOIN levels l ON r.level_id = l.id
+        WHERE r.status = 'pending' 
+        ORDER BY r.id DESC
+    `;
     db.query(sql, (err, results) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(results);
     });
 };
 
-// 3. تحديث حالة الطلب (هذه هي الدالة التي تسبب الخطأ حالياً)
 const updateRegistrationStatus = (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
@@ -35,9 +38,4 @@ const updateRegistrationStatus = (req, res) => {
     });
 };
 
-// تأكد من وجود هذه الأسماء الثلاثة هنا بالضبط
-module.exports = { 
-    getStats, 
-    getRecentRegistrations, 
-    updateRegistrationStatus 
-};
+module.exports = { getStats, getRecentRegistrations, updateRegistrationStatus };

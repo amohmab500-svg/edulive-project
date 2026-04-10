@@ -1,13 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const settingsController = require('../controllers/settingsController');
-// const { verifyToken, isAdmin } = require('../middleware/auth'); // للتأكد من الصلاحيات لاحقاً
 
-// مسارات بيانات الاتصال
+// Contact settings
 router.get('/contact', settingsController.getContactSettings);
 router.put('/contact', settingsController.updateContactSettings);
 
-// مسارات التواصل الاجتماعي
+// Social links
 router.get('/social', settingsController.getSocialLinks);
+
+// Reviews
+router.get('/reviews', settingsController.getReviews);
 
 module.exports = router;

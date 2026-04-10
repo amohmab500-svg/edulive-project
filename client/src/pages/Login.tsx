@@ -27,7 +27,7 @@ export default function Login() {
       setUser(res.data.user);
 
       if (res.data.user.role === "admin") {
-        navigate("/");
+        navigate("/dashboard");
       } else {
         setError("Accès refusé - Admins seulement");
       }
@@ -41,7 +41,6 @@ export default function Login() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
-        {/* Logo / Title */}
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-slate-900">EduLive</h1>
           <p className="mt-2 text-slate-500">Connectez-vous à votre espace</p>

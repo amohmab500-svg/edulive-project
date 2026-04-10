@@ -1,20 +1,20 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 import { logout } from "../services/auth";
 
 export default function AdminLayout() {
   const navItems = [
-    { to: "/", label: "Tableau de bord" },
-    { to: "/levels", label: "Niveaux" },
-    { to: "/registration-requests", label: "Demandes d'inscription" },
-    { to: "/teachers", label: "Enseignants" },
-    { to: "/students", label: "Élèves" },
-    { to: "/groups", label: "Groupes" },
-    { to: "/resources", label: "Ressources" },
-    { to: "/messages", label: "Messagerie" },
-    { to: "/contact-messages", label: "Messages Contact" },
-    { to: "/attendance", label: "Présences" },
-    { to: "/profile", label: "Mon profil" },
-    { to: "/settings", label: "Paramètres" },
+    { to: "/dashboard", label: "Tableau de bord" },
+    { to: "/dashboard/levels", label: "Niveaux" },
+    { to: "/dashboard/registration-requests", label: "Demandes d'inscription" },
+    { to: "/dashboard/teachers", label: "Enseignants" },
+    { to: "/dashboard/students", label: "Élèves" },
+    { to: "/dashboard/groups", label: "Groupes" },
+    { to: "/dashboard/resources", label: "Ressources" },
+    { to: "/dashboard/messages", label: "Messagerie" },
+    { to: "/dashboard/contact-messages", label: "Messages Contact" },
+    { to: "/dashboard/attendance", label: "Présences" },
+    { to: "/dashboard/profile", label: "Mon profil" },
+    { to: "/dashboard/settings", label: "Paramètres" },
   ];
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
@@ -32,7 +32,12 @@ export default function AdminLayout() {
         </div>
         <nav className="space-y-2 p-4">
           {navItems.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.to === "/"} className={linkClass}>
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === "/dashboard"}
+              className={linkClass}
+            >
               {item.label}
             </NavLink>
           ))}
@@ -43,8 +48,12 @@ export default function AdminLayout() {
         <header className="flex items-center justify-between border-b border-slate-200 bg-white px-8 py-4">
           <p className="text-sm text-slate-500">Bienvenue, EduLive</p>
           <div className="flex items-center gap-6 text-sm font-medium text-slate-700">
-            <NavLink to="/profile" className="hover:text-slate-900">Mon Profil</NavLink>
-            <button onClick={logout} className="hover:text-slate-900">Déconnexion</button>
+            <NavLink to="/dashboard/profile" className="hover:text-slate-900">
+              Mon Profil
+            </NavLink>
+            <button onClick={logout} className="hover:text-slate-900">
+              Déconnexion
+            </button>
           </div>
         </header>
         <main className="flex-1 p-8">

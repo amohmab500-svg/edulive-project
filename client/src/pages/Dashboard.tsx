@@ -22,7 +22,6 @@ export default function Dashboard() {
   const [requests, setRequests] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // الدالة المعدلة والمضمونة لجلب البيانات
   const fetchData = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${getToken()}` } };
@@ -32,7 +31,6 @@ export default function Dashboard() {
         axios.get(`${API_URL}/recent-registrations`, config)
       ]);
 
-      // لرؤية البيانات في F12 Console والتأكد من وصولها من قاعدة البيانات
       console.log("Stats from Server:", statsRes.data);
 
       setStatsData({
@@ -54,15 +52,20 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
+  // تعديل الدالة لترسل approved أو rejected بدلاً من الكلمات الفرنسية
   const handleStatusUpdate = async (id: number, newStatus: string) => {
-    if (!window.confirm(`Voulez-vous ${newStatus === 'Approuvée' ? 'approuver' : 'rejeter'} cette demande ?`)) return;
+    const confirmMsg = newStatus === 'approved' 
+      ? "Voulez-vous approuver cette demande ?" 
+      : "Voulez-vous rejeter cette demande ?";
+      
+    if (!window.confirm(confirmMsg)) return;
     
     try {
       await axios.put(`${API_URL}/registration/${id}`, 
         { status: newStatus },
         { headers: { Authorization: `Bearer ${getToken()}` } }
       );
-      fetchData(); // تحديث الأرقام والطلبات بعد التعديل
+      fetchData(); 
     } catch (error) {
       alert("Erreur lors de la mise à jour");
     }
@@ -81,7 +84,6 @@ export default function Dashboard() {
     <div className="space-y-8">
       <h1 className="text-3xl font-bold text-slate-900">Tableau de bord</h1>
 
-      {/* عرض الأرقام في الكروت */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
           <div key={index} className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
@@ -109,13 +111,15 @@ export default function Dashboard() {
                 </div>
                 <div className="flex gap-3">
                   <button 
-                    onClick={() => handleStatusUpdate(req.id, "Approuvée")}
+                    // إرسال "approved" لقاعدة البيانات
+                    onClick={() => handleStatusUpdate(req.id, "approved")}
                     className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
                   >
                     Approuver
                   </button>
                   <button 
-                    onClick={() => handleStatusUpdate(req.id, "Refusée")}
+                    // إرسال "rejected" لقاعدة البيانات
+                    onClick={() => handleStatusUpdate(req.id, "rejected")}
                     className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
                   >
                     Rejeter
