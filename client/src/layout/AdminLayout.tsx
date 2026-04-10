@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { logout } from "../services/auth";
 
 export default function AdminLayout() {
   const navItems = [
@@ -29,7 +30,6 @@ export default function AdminLayout() {
         <div className="border-b border-slate-200 px-6 py-6">
           <h1 className="text-3xl font-bold text-slate-900">Administration</h1>
         </div>
-
         <nav className="space-y-2 p-4">
           {navItems.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.to === "/"} className={linkClass}>
@@ -42,13 +42,11 @@ export default function AdminLayout() {
       <div className="flex flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-slate-200 bg-white px-8 py-4">
           <p className="text-sm text-slate-500">Bienvenue, EduLive</p>
-
           <div className="flex items-center gap-6 text-sm font-medium text-slate-700">
             <NavLink to="/profile" className="hover:text-slate-900">Mon Profil</NavLink>
-            <button className="hover:text-slate-900">Déconnexion</button>
+            <button onClick={logout} className="hover:text-slate-900">Déconnexion</button>
           </div>
         </header>
-
         <main className="flex-1 p-8">
           <Outlet />
         </main>

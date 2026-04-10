@@ -20,8 +20,7 @@ const login = (req, res) => {
 
     const user = results[0];
 
-   // const isMatch = await bcrypt.compare(password, user.password);
-    const isMatch = (password === "123456" || await bcrypt.compare(password, user.password));
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: "Email ou mot de passe incorrect" });
     }
