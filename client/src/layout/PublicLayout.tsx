@@ -1,7 +1,31 @@
+
 import { Link, Outlet, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
+const API = "http://localhost:5000/api";
+
+interface ContactSettings {
+  primary_phone: string;
+  email: string;
+  address: string;
+}
+
+interface SocialLink {
+  id: number;
+  name: string;
+  url: string;
+  icon: string;
+}
 
 export default function PublicLayout() {
   const location = useLocation();
+  const [contact, setContact] = useState<ContactSettings | null>(null);
+  const [socials, setSocials] = useState<SocialLink[]>([]);
+
+  useEffect(() => {
+    axios.get(`${API}/settings/contact`).then((res) => setContact(res.data)).catch(() => {});
+    axios.get(`${API}/settings/social`).then((res) => setSocials(res.data)).catch(() => {});
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -17,18 +41,22 @@ export default function PublicLayout() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-8">
-            <Link to="/" className={`text-sm font-medium transition ${location.pathname === "/" ? "text-orange-500" : "text-slate-700 hover:text-orange-500"}`}>
-              Accueil
-            </Link>
-            <Link to="/niveaux" className={`text-sm font-medium transition ${location.pathname === "/niveaux" ? "text-orange-500" : "text-slate-700 hover:text-orange-500"}`}>
-              Niveaux
-            </Link>
-            <Link to="/avis" className={`text-sm font-medium transition ${location.pathname === "/avis" ? "text-orange-500" : "text-slate-700 hover:text-orange-500"}`}>
-              Avis
-            </Link>
-            <Link to="/contact" className={`text-sm font-medium transition ${location.pathname === "/contact" ? "text-orange-500" : "text-slate-700 hover:text-orange-500"}`}>
-              Contact
-            </Link>
+            {[
+              { to: "/", label: "Accueil" },
+              { to: "/niveaux", label: "Niveaux" },
+              { to: "/avis", label: "Avis" },
+              { to: "/contact", label: "Contact" },
+            ].map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`text-sm font-medium transition ${
+                  location.pathname === item.to ? "text-orange-500" : "text-slate-700 hover:text-orange-500"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
           </nav>
 
           <Link
@@ -45,46 +73,52 @@ export default function PublicLayout() {
         <Outlet />
       </main>
 
-      {/* Footer */}
+      {/* Footer - Dynamic */}
       <footer className="bg-slate-900 text-white">
         <div className="mx-auto max-w-7xl px-6 py-12">
           <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
-            {/* Logo */}
             <div>
               <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-orange-500 text-white font-bold text-2xl">E</div>
             </div>
 
-            {/* Contact */}
             <div>
-              <h3 className="mb-4 flex items-center gap-2 font-semibold text-white">
-                © Contact
-              </h3>
+              <h3 className="mb-4 font-semibold text-white">© Contact</h3>
               <div className="space-y-3 text-slate-400 text-sm">
-                <div className="flex items-center gap-2">
-                  <span>📱</span>
-                  <span>+216 25 105 711</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>✉️</span>
-                  <span>salma@educentre.tn</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>📍</span>
-                  <span>Tunisie</span>
-                </div>
+                {contact?.primary_phone && (
+                  <div className="flex items-center gap-2">
+                    <span>📱</span>
+                    <span>{contact.primary_phone}</span>
+                  </div>
+                )}
+                {contact?.email && (
+                  <div className="flex items-center gap-2">
+                    <span>✉️</span>
+                    <span>{contact.email}</span>
+                  </div>
+                )}
+                {contact?.address && (
+                  <div className="flex items-center gap-2">
+                    <span>📍</span>
+                    <span>{contact.address}</span>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Social */}
             <div>
               <h3 className="mb-4 font-semibold text-white">Rejoignez notre newsletter</h3>
               <div className="flex gap-3">
-                <a href="#" className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700">
-                  f
-                </a>
-                <a href="#" className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white hover:opacity-90">
-                  IG
-                </a>
+                {socials.length > 0 ? socials.map((s) => (
+                  <a key={s.id} href={s.url} target="_blank" rel="noopener noreferrer"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white hover:opacity-80 text-xs font-bold">
+                    {s.name.charAt(0)}
+                  </a>
+                )) : (
+                  <>
+                    <a href="#" className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white">f</a>
+                    <a href="#" className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs">IG</a>
+                  </>
+                )}
               </div>
             </div>
           </div>

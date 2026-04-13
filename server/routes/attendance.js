@@ -1,15 +1,19 @@
-const express = require("express");
+// server/routes/attendance.js
+const express = require('express');
 const router = express.Router();
-const {
-  getAttendance,
-  getGroupStudents,
-  saveAttendance,
-  getAttendanceHistory,
-} = require("../controllers/attendanceController");
+const attendanceController = require('../controllers/attendanceController');
+const { protect } = require('../middleware/authMiddleware');
 
-router.get("/history/:group_id", getAttendanceHistory);
-router.get("/students/:group_id", getGroupStudents);
-router.get("/", getAttendance);
-router.post("/", saveAttendance);
+// جلب الطلاب في مجموعة
+router.get('/students/:group_id', protect, attendanceController.getStudentsByGroup);
+
+// حفظ الحضور (POST)
+router.post('/', protect, attendanceController.saveAttendance);
+
+// جلب حضور يوم معين (GET /api/attendance?group_id=...&date=...)
+router.get('/', protect, attendanceController.getAttendanceByDate);
+
+// جلب تاريخ الحضور للمجموعة
+router.get('/history/:group_id', protect, attendanceController.getGroupHistory);
 
 module.exports = router;

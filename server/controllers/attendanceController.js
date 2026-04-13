@@ -1,92 +1,72 @@
-const db = require("../db");
+// server/controllers/attendanceController.js
+const db = require('../db');
 
-const getAttendance = (req, res) => {
-  const { group_id, date } = req.query;
-
-  if (!group_id || !date) {
-    return res.status(400).json({ error: "group_id and date are required" });
-  }
-
-  const sql = `
-    SELECT a.*, s.name AS student_name
-    FROM attendance a
-    JOIN students s ON a.student_id = s.id
-    WHERE a.group_id = ? AND a.attendance_date = ?
-    ORDER BY s.name
-  `;
-
-  db.query(sql, [group_id, date], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
-  });
+// 1. جلب طلاب مجموعة معينة (لأخذ الحضور)
+exports.getStudentsByGroup = (req, res) => {
+    const { group_id } = req.params;
+    const sql = "SELECT id, name as full_name FROM students WHERE group_id = ?";
+    
+    db.query(sql, [group_id], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
 };
 
-const getGroupStudents = (req, res) => {
-  const { group_id } = req.params;
+// 2. حفظ الحضور (إضافة أو تحديث)
+exports.saveAttendance = (req, res) => {
+    const { group_id, date, attendance } = req.body; // attendance is array of {student_id, status}
 
-  const sql = `
-    SELECT id, name AS full_name, email FROM students
-    WHERE group_id = ?
-    ORDER BY name
-  `;
+    // سنستخدم نظام الـ "Transaction" لضمان حذف القديم وإضافة الجديد لنفس التاريخ والمجموعة
+    db.beginTransaction((err) => {
+        if (err) throw err;
 
-  db.query(sql, [group_id], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
-  });
+        const deleteSql = "DELETE FROM attendance WHERE group_id = ? AND attendance_date = ?";
+        db.query(deleteSql, [group_id, date], (err) => {
+            if (err) return db.rollback(() => res.status(500).json({ error: err.message }));
+
+            if (attendance.length === 0) {
+                return db.commit(() => res.json({ message: "تم تحديث السجل" }));
+            }
+
+            const values = attendance.map(a => [a.student_id, group_id, date, a.status]);
+            const insertSql = "INSERT INTO attendance (student_id, group_id, attendance_date, status) VALUES ?";
+            
+            db.query(insertSql, [values], (err) => {
+                if (err) return db.rollback(() => res.status(500).json({ error: err.message }));
+                db.commit(() => res.json({ message: "تم حفظ الحضور بنجاح" }));
+            });
+        });
+    });
 };
 
-const saveAttendance = (req, res) => {
-  const { group_id, date, attendance } = req.body;
-
-  if (!group_id || !date || !attendance || attendance.length === 0) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
-
-  db.query(
-    `DELETE FROM attendance WHERE group_id = ? AND attendance_date = ?`,
-    [group_id, date],
-    (err) => {
-      if (err) return res.status(500).json({ error: err.message });
-
-      const values = attendance.map((a) => [
-        a.student_id,
-        group_id,
-        date,
-        a.status,
-      ]);
-
-      db.query(
-        `INSERT INTO attendance (student_id, group_id, attendance_date, status) VALUES ?`,
-        [values],
-        (err) => {
-          if (err) return res.status(500).json({ error: err.message });
-          res.json({ message: "Présence enregistrée avec succès" });
-        }
-      );
-    }
-  );
+// 3. جلب الحضور المسجل لتاريخ معين
+exports.getAttendanceByDate = (req, res) => {
+    const { group_id, date } = req.query;
+    const sql = "SELECT student_id, status FROM attendance WHERE group_id = ? AND attendance_date = ?";
+    
+    db.query(sql, [group_id, date], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
 };
 
-const getAttendanceHistory = (req, res) => {
-  const { group_id } = req.params;
-
-  const sql = `
-    SELECT 
-      a.attendance_date,
-      COUNT(*) as total,
-      SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) as present_count,
-      SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as absent_count
-    FROM attendance a
-    WHERE a.group_id = ?
-    GROUP BY a.attendance_date
-    ORDER BY a.attendance_date DESC
-  `;
-
-  db.query(sql, [group_id], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
-  });
+// 4. جلب تاريخ الحضور (History) للمجموعة
+exports.getGroupHistory = (req, res) => {
+    const { group_id } = req.params;
+    const sql = `
+        SELECT 
+            attendance_date, 
+            COUNT(*) as total,
+            SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count,
+            SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent_count
+        FROM attendance
+        WHERE group_id = ?
+        GROUP BY attendance_date
+        ORDER BY attendance_date DESC
+    `;
+    
+    db.query(sql, [group_id], (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
 };
-
-module.exports = { getAttendance, getGroupStudents, saveAttendance, getAttendanceHistory };

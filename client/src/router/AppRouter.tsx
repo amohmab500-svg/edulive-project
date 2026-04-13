@@ -15,32 +15,53 @@ import Profile from "../pages/Profile";
 import Attendance from "../pages/Attendance";
 import RegistrationRequests from "../pages/RegistrationRequests";
 
+// Teacher Pages Imports
+import TeacherLayout from "../layout/TeacherLayout";
+import TeacherDashboard from "../pages/teacher/TeacherDashboard";
+import TeacherClasses from "../pages/teacher/TeacherClasses";
+import TeacherProfile from "../pages/teacher/TeacherProfile";
+import TeacherResources from "../pages/teacher/TeacherResources";
+import TeacherAttendance from "../pages/teacher/TeacherAttendance";
+import TeacherMessages from "../pages/teacher/TeacherMessages";
+
+// Student Pages Imports ✅ (تمت الإضافة)
+import StudentLayout from "../layout/StudentLayout";
+import StudentDashboard from "../pages/student/StudentDashboard";
+import StudentResources from "../pages/student/StudentResources";
+import StudentAttendance from "../pages/student/StudentAttendance";
+import StudentProfile from "../pages/student/StudentProfile";
+import StudentClasses from "../pages/student/StudentClasses";
+import StudentMessages from "../pages/student/StudentMessages";
+
+
+
 // Public Pages Imports
 import PublicLayout from "../layout/PublicLayout";
 import HomePage from "../pages/public/HomePage";
 import ContactPage from "../pages/public/ContactPage";
 import RegisterPage from "../pages/public/RegisterPage";
-import NiveauxPage from "../pages/public/NiveauxPage"; // الجديدة
-import AvisPage from "../pages/public/AvisPage";       // الجديدة
+import NiveauxPage from "../pages/public/NiveauxPage";
+import AvisPage from "../pages/public/AvisPage";
+
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
 
-        {/* Public routes - visitors */}
+        {/* Public routes */}
         <Route path="/" element={<PublicLayout />}>
           <Route index element={<HomePage />} />
           <Route path="contact" element={<ContactPage />} />
           <Route path="register" element={<RegisterPage />} />
-          <Route path="niveaux" element={<NiveauxPage />} /> {/* إضافة المسار */}
-          <Route path="avis" element={<AvisPage />} />       {/* إضافة المسار */}
+          <Route path="niveaux" element={<NiveauxPage />} />
+          <Route path="avis" element={<AvisPage />} />
         </Route>
 
-        {/* Login page */}
+        {/* Login */}
         <Route path="/login" element={<Login />} />
 
-        {/* Admin protected routes */}
+        {/* Admin routes */}
         <Route
           path="/dashboard"
           element={
@@ -61,6 +82,40 @@ export default function AppRouter() {
           <Route path="profile" element={<Profile />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="registration-requests" element={<RegistrationRequests />} />
+        </Route>
+
+        {/* Teacher routes */}
+        <Route
+          path="/teacher"
+          element={
+            <ProtectedRoute allowedRoles={["teacher"]}>
+              <TeacherLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<TeacherDashboard />} />
+          <Route path="classes" element={<TeacherClasses />} />
+          <Route path="profile" element={<TeacherProfile />} />
+          <Route path="resources" element={<TeacherResources />} />
+          <Route path="attendance" element={<TeacherAttendance />} />
+          <Route path="messages" element={<TeacherMessages />} />
+        </Route>
+
+        {/* Student routes ✅ (تمت الإضافة هنا) */}
+        <Route
+          path="/student"
+          element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <StudentLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<StudentDashboard />} />
+          <Route path="resources" element={<StudentResources />} />
+          <Route path="attendance" element={<StudentAttendance />} />
+          <Route path="profile" element={<StudentProfile />} />
+          <Route path="classes" element={<StudentClasses />} />
+          <Route path="messages" element={<StudentMessages />} />
         </Route>
 
       </Routes>

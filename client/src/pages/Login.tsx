@@ -26,11 +26,20 @@ export default function Login() {
       setToken(res.data.token);
       setUser(res.data.user);
 
-      if (res.data.user.role === "admin") {
+      // --- ✅ التعديل هنا للسماح للأدمن والأستاذ والطالب بالدخول ---
+      const userRole = res.data.user.role;
+
+      if (userRole === "admin") {
         navigate("/dashboard");
+      } else if (userRole === "teacher") {
+        navigate("/teacher");
+      } else if (userRole === "student") {
+        navigate("/student"); // 🚀 تم إضافة توجيه الطالب هنا
       } else {
-        setError("Accès refusé - Admins seulement");
+        setError("Accès refusé");
       }
+      // --------------------------------------------------------
+
     } catch (err: any) {
       setError(err.response?.data?.error || "Erreur de connexion");
     } finally {
@@ -62,7 +71,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-              placeholder="admin@edulive.tn"
+              placeholder="email@example.com"
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
             />
           </div>
@@ -81,6 +90,7 @@ export default function Login() {
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-12 outline-none focus:border-blue-500"
               />
               <button
+                type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-3.5 text-slate-400 hover:text-slate-600"
               >
