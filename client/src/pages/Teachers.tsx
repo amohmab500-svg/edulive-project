@@ -30,7 +30,10 @@ export default function Teachers() {
   const fetchTeachers = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/teachers");
+      const token = localStorage.getItem("token");
+      const res = await axios.get("http://localhost:5000/api/teachers", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setTeachersData(res.data);
     } catch (error) {
       console.error("Error fetching teachers:", error);
@@ -72,21 +75,32 @@ export default function Teachers() {
       return;
     }
 
+    const token = localStorage.getItem("token");
+    const headers = { Authorization: `Bearer ${token}` };
+
     try {
       if (editingId !== null) {
-        await axios.put(`http://localhost:5000/api/teachers/${editingId}`, {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          specialty: formData.specialty,
-        });
+        await axios.put(
+          `http://localhost:5000/api/teachers/${editingId}`,
+          {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            specialty: formData.specialty,
+          },
+          { headers }
+        );
       } else {
-        await axios.post("http://localhost:5000/api/teachers", {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          specialty: formData.specialty,
-        });
+        await axios.post(
+          "http://localhost:5000/api/teachers",
+          {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            specialty: formData.specialty,
+          },
+          { headers }
+        );
       }
 
       await fetchTeachers();
@@ -104,8 +118,12 @@ export default function Teachers() {
     );
     if (!confirmed) return;
 
+    const token = localStorage.getItem("token");
+
     try {
-      await axios.delete(`http://localhost:5000/api/teachers/${id}`);
+      await axios.delete(`http://localhost:5000/api/teachers/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       await fetchTeachers();
     } catch (error) {
       console.error("Error deleting teacher:", error);
@@ -154,32 +172,40 @@ export default function Teachers() {
             </thead>
 
             <tbody className="divide-y">
-              {teachersData.map((teacher) => (
-                <tr key={teacher.id} className="h-20">
-                  <td className="font-medium text-slate-800">{teacher.name}</td>
-                  <td className="text-slate-600">{teacher.email || "-"}</td>
-                  <td className="text-slate-600">{teacher.phone || "-"}</td>
-                  <td className="text-slate-600">{teacher.specialty || "-"}</td>
-
-                  <td className="text-right">
-                    <div className="flex justify-end gap-3">
-                      <button
-                        onClick={() => handleOpenEditModal(teacher)}
-                        className="rounded-lg p-2 hover:bg-slate-100"
-                      >
-                        <Pencil size={18} className="text-slate-600" />
-                      </button>
-
-                      <button
-                        onClick={() => handleDeleteTeacher(teacher.id)}
-                        className="rounded-lg p-2 hover:bg-red-50"
-                      >
-                        <Trash2 size={18} className="text-red-500" />
-                      </button>
-                    </div>
+              {teachersData.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-slate-400">
+                    Aucun enseignant trouvé
                   </td>
                 </tr>
-              ))}
+              ) : (
+                teachersData.map((teacher) => (
+                  <tr key={teacher.id} className="h-20">
+                    <td className="font-medium text-slate-800">{teacher.name}</td>
+                    <td className="text-slate-600">{teacher.email || "-"}</td>
+                    <td className="text-slate-600">{teacher.phone || "-"}</td>
+                    <td className="text-slate-600">{teacher.specialty || "-"}</td>
+
+                    <td className="text-right">
+                      <div className="flex justify-end gap-3">
+                        <button
+                          onClick={() => handleOpenEditModal(teacher)}
+                          className="rounded-lg p-2 hover:bg-slate-100"
+                        >
+                          <Pencil size={18} className="text-slate-600" />
+                        </button>
+
+                        <button
+                          onClick={() => handleDeleteTeacher(teacher.id)}
+                          className="rounded-lg p-2 hover:bg-red-50"
+                        >
+                          <Trash2 size={18} className="text-red-500" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         )}

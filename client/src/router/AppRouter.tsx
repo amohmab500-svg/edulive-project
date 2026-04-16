@@ -32,6 +32,7 @@ import StudentAttendance from "../pages/student/StudentAttendance";
 import StudentProfile from "../pages/student/StudentProfile";
 import StudentClasses from "../pages/student/StudentClasses";
 import StudentMessages from "../pages/student/StudentMessages";
+ import StudentSchedule from "../pages/student/StudentSchedule";
 
 
 
@@ -116,6 +117,10 @@ export default function AppRouter() {
           <Route path="profile" element={<StudentProfile />} />
           <Route path="classes" element={<StudentClasses />} />
           <Route path="messages" element={<StudentMessages />} />
+         
+
+
+         <Route path="schedule" element={<StudentSchedule />} />
         </Route>
 
       </Routes>

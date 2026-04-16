@@ -1,47 +1,67 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { logout } from "../services/auth";
+import {
+  LayoutDashboard, GraduationCap, ClipboardList, Users,
+  BookOpen, FileText, MessageSquare, Mail, Calendar,
+  User, Settings, UserCheck
+} from "lucide-react";
 
 export default function AdminLayout() {
-  const navItems = [
-    { to: "/dashboard", label: "Tableau de bord" },
-    { to: "/dashboard/levels", label: "Niveaux" },
-    { to: "/dashboard/registration-requests", label: "Demandes d'inscription" },
-    { to: "/dashboard/teachers", label: "Enseignants" },
-    { to: "/dashboard/students", label: "Élèves" },
-    { to: "/dashboard/groups", label: "Groupes" },
-    { to: "/dashboard/resources", label: "Ressources" },
-    { to: "/dashboard/messages", label: "Messagerie" },
-    { to: "/dashboard/contact-messages", label: "Messages Contact" },
-    { to: "/dashboard/attendance", label: "Présences" },
-    { to: "/dashboard/profile", label: "Mon profil" },
-    { to: "/dashboard/settings", label: "Paramètres" },
-  ];
+  const navigate = useNavigate();
 
-  const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `block rounded-xl px-4 py-3 text-sm font-medium transition ${
-      isActive
-        ? "bg-slate-100 text-slate-900"
-        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-    }`;
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  const navItems = [
+    { to: "/dashboard", label: "Tableau de bord", icon: <LayoutDashboard size={18} /> },
+    { to: "/dashboard/levels", label: "Niveaux", icon: <GraduationCap size={18} /> },
+    { to: "/dashboard/registration-requests", label: "Demandes d'inscription", icon: <ClipboardList size={18} /> },
+    { to: "/dashboard/teachers", label: "Enseignants", icon: <UserCheck size={18} /> },
+    { to: "/dashboard/students", label: "Élèves", icon: <Users size={18} /> },
+    { to: "/dashboard/groups", label: "Groupes", icon: <BookOpen size={18} /> },
+    { to: "/dashboard/resources", label: "Ressources", icon: <FileText size={18} /> },
+    { to: "/dashboard/messages", label: "Messagerie", icon: <MessageSquare size={18} /> },
+    { to: "/dashboard/contact-messages", label: "Messages Contact", icon: <Mail size={18} /> },
+    { to: "/dashboard/attendance", label: "Présences", icon: <Calendar size={18} /> },
+    { to: "/dashboard/profile", label: "Mon profil", icon: <User size={18} /> },
+    { to: "/dashboard/settings", label: "Paramètres", icon: <Settings size={18} /> },
+  ];
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <aside className="w-64 border-r border-slate-200 bg-white">
+      <aside className="w-64 border-r border-slate-200 bg-white flex flex-col">
         <div className="border-b border-slate-200 px-6 py-6">
-          <h1 className="text-3xl font-bold text-slate-900">Administration</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Administration</h1>
         </div>
-        <nav className="space-y-2 p-4">
+        <nav className="space-y-1 p-4 flex-1 overflow-y-auto">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.to === "/dashboard"}
-              className={linkClass}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
+                  isActive
+                    ? "bg-blue-50 text-blue-600"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                }`
+              }
             >
+              {item.icon}
               {item.label}
             </NavLink>
           ))}
         </nav>
+        <div className="p-4 border-t border-slate-200">
+          <button
+            onClick={handleLogout}
+            className="text-sm text-slate-400 hover:text-red-500 px-4"
+          >
+            Déconnexion
+          </button>
+        </div>
       </aside>
 
       <div className="flex flex-1 flex-col">
@@ -51,7 +71,7 @@ export default function AdminLayout() {
             <NavLink to="/dashboard/profile" className="hover:text-slate-900">
               Mon Profil
             </NavLink>
-            <button onClick={logout} className="hover:text-slate-900">
+            <button onClick={handleLogout} className="hover:text-red-500">
               Déconnexion
             </button>
           </div>
