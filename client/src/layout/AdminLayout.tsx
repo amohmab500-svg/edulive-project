@@ -3,7 +3,7 @@ import { logout } from "../services/auth";
 import {
   LayoutDashboard, GraduationCap, ClipboardList, Users,
   BookOpen, FileText, MessageSquare, Mail, Calendar,
-  User, Settings, UserCheck
+  User, Settings, UserCheck, Library
 } from "lucide-react";
 
 export default function AdminLayout() {
@@ -16,6 +16,7 @@ export default function AdminLayout() {
 
   const navItems = [
     { to: "/dashboard", label: "Tableau de bord", icon: <LayoutDashboard size={18} /> },
+    { to: "/dashboard/formations", label: "Formations", icon: <Library size={18} /> },
     { to: "/dashboard/levels", label: "Niveaux", icon: <GraduationCap size={18} /> },
     { to: "/dashboard/registration-requests", label: "Demandes d'inscription", icon: <ClipboardList size={18} /> },
     { to: "/dashboard/teachers", label: "Enseignants", icon: <UserCheck size={18} /> },

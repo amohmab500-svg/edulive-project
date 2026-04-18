@@ -26,6 +26,11 @@ const dashboardRoutes = require("./routes/dashboard");
 const teacherRoutes = require("./routes/teacher"); 
 const studentRoutes = require("./routes/student");
 const teachersRoutes = require("./routes/teachers"); // ✅ أضف هذا
+const categoriesRoutes = require("./routes/categories");
+const usersRoutes = require("./routes/users");
+
+
+
 // --- 2. تفعيل المسارات (Endpoints) ---
 app.use("/api/auth", authRoutes);
 app.use("/api/levels", levelsRoutes);
@@ -41,7 +46,10 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/teacher", teacherRoutes); 
 app.use("/api/student", studentRoutes);
-app.use("/api/teachers", teachersRoutes); // ✅ أضف هذا
+app.use("/api/teachers", teachersRoutes); 
+app.use("/api/categories", categoriesRoutes);
+app.use("/api/users", usersRoutes);
+
 app.get("/", (req, res) => {
   res.send("EduLive API is running...");
 });

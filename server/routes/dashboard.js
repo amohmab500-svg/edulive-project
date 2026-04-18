@@ -1,15 +1,21 @@
 const express = require("express");
 const router = express.Router();
-// استيراد الدوال الثلاث
-const { 
-    getStats, 
-    getRecentRegistrations, 
-    updateRegistrationStatus 
+const {
+  getStats,
+  getRecentRegistrations,
+  updateRegistrationStatus,
+  getStudentsPerGroup,
+  getAttendanceStats,
+  getStudentsPerLevel,
 } = require("../controllers/dashboardController");
 
-// المسارات - تأكد أن الأسماء تطابق ما استوردناه بالأعلى
-router.get("/stats", getStats);
-router.get("/recent-registrations", getRecentRegistrations);
-router.put("/registration/:id", updateRegistrationStatus); // السطر 9 الذي كان يسبب المشكلة
+const { protect, adminOnly } = require("../middleware/authMiddleware");
+
+router.get("/stats", protect, adminOnly, getStats);
+router.get("/recent-registrations", protect, adminOnly, getRecentRegistrations);
+router.put("/registration/:id", protect, adminOnly, updateRegistrationStatus);
+router.get("/students-per-group", protect, adminOnly, getStudentsPerGroup);
+router.get("/attendance-stats", protect, adminOnly, getAttendanceStats);
+router.get("/students-per-level", protect, adminOnly, getStudentsPerLevel);
 
 module.exports = router;

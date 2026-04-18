@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require("../db");
 const { protect } = require("../middleware/authMiddleware");
 
-// GET /api/student/info - بيانات الطالب + مجموعته
+// GET /api/student/info
 router.get("/info", protect, (req, res) => {
   const userId = req.user.id;
 
@@ -29,7 +29,7 @@ router.get("/info", protect, (req, res) => {
   });
 });
 
-// GET /api/student/resources - موارد مجموعة الطالب
+// GET /api/student/resources
 router.get("/resources", protect, (req, res) => {
   const userId = req.user.id;
 
@@ -52,7 +52,7 @@ router.get("/resources", protect, (req, res) => {
   });
 });
 
-// GET /api/student/attendance - سجل حضور الطالب
+// GET /api/student/attendance
 router.get("/attendance", protect, (req, res) => {
   const userId = req.user.id;
 
@@ -66,6 +66,31 @@ router.get("/attendance", protect, (req, res) => {
       SELECT * FROM attendance
       WHERE student_id = ?
       ORDER BY attendance_date DESC
+    `;
+    db.query(sql, [studentId], (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    });
+  });
+});
+
+// GET /api/student/teachers — للمحادثات الخاصة
+router.get("/teachers", protect, (req, res) => {
+  const userId = req.user.id;
+
+  db.query(`SELECT student_id FROM users WHERE id = ?`, [userId], (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!results[0]?.student_id) return res.json([]);
+
+    const studentId = results[0].student_id;
+
+    const sql = `
+      SELECT u.id as user_id, u.full_name
+      FROM users u
+      INNER JOIN teachers t ON u.teacher_id = t.id
+      INNER JOIN groups_table g ON g.teacher_id = t.id
+      INNER JOIN students s ON s.group_id = g.id
+      WHERE s.id = ?
     `;
     db.query(sql, [studentId], (err, rows) => {
       if (err) return res.status(500).json({ error: err.message });

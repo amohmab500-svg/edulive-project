@@ -29,16 +29,24 @@ export default function StudentSchedule() {
   }, []);
 
   // Parse schedule: "Lundi 14:00-16:00, Mercredi 10:00-12:00"
-  const parseSchedule = (schedule: string) => {
-    if (!schedule) return [];
+  
+const parseSchedule = (schedule: string) => {
+  if (!schedule) return [];
+  if (schedule.includes(",")) {
     return schedule.split(",").map((s) => {
       const parts = s.trim().split(" ");
-      const day = parts[0] || "";
-      const time = parts.slice(1).join(" ") || "";
-      return { day, time };
+      return { day: parts[0] || "", time: parts.slice(1).join(" ") || "" };
     });
-  };
-
+  }
+  if (schedule.includes("&")) {
+    const timeMatch = schedule.match(/\d{2}:\d{2}-\d{2}:\d{2}/);
+    const time = timeMatch ? timeMatch[0] : "";
+    const days = schedule.replace(time, "").split("&").map((d) => d.trim());
+    return days.map((day) => ({ day, time }));
+  }
+  const parts = schedule.trim().split(" ");
+  return [{ day: parts[0] || "", time: parts.slice(1).join(" ") || "" }];
+};
   const dayColors: Record<string, string> = {
     Lundi:    "bg-blue-100 text-blue-700 border-blue-200",
     Mardi:    "bg-purple-100 text-purple-700 border-purple-200",

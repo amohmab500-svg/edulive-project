@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { setToken, setUser } from "../services/auth";
 
@@ -19,27 +19,16 @@ export default function Login() {
       setError("Veuillez remplir tous les champs");
       return;
     }
-
     setLoading(true);
     try {
       const res = await axios.post(`${API}/auth/login`, { email, password });
       setToken(res.data.token);
       setUser(res.data.user);
-
-      // --- ✅ التعديل هنا للسماح للأدمن والأستاذ والطالب بالدخول ---
       const userRole = res.data.user.role;
-
-      if (userRole === "admin") {
-        navigate("/dashboard");
-      } else if (userRole === "teacher") {
-        navigate("/teacher");
-      } else if (userRole === "student") {
-        navigate("/student"); // 🚀 تم إضافة توجيه الطالب هنا
-      } else {
-        setError("Accès refusé");
-      }
-      // --------------------------------------------------------
-
+      if (userRole === "admin") navigate("/dashboard");
+      else if (userRole === "teacher") navigate("/teacher");
+      else if (userRole === "student") navigate("/student");
+      else setError("Accès refusé");
     } catch (err: any) {
       setError(err.response?.data?.error || "Erreur de connexion");
     } finally {
@@ -63,9 +52,7 @@ export default function Login() {
 
         <div className="space-y-5">
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">
-              Email
-            </label>
+            <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
             <input
               type="email"
               value={email}
@@ -77,9 +64,7 @@ export default function Login() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">
-              Mot de passe
-            </label>
+            <label className="mb-2 block text-sm font-medium text-slate-700">Mot de passe</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -96,6 +81,15 @@ export default function Login() {
               >
                 {showPassword ? "🙈" : "👁️"}
               </button>
+            </div>
+            {/* رابط نسيت كلمة المرور */}
+            <div className="mt-2 text-right">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-blue-500 hover:text-blue-700 hover:underline"
+              >
+                Mot de passe oublié ?
+              </Link>
             </div>
           </div>
 

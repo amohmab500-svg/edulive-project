@@ -14,6 +14,9 @@ import Settings from "../pages/Settings";
 import Profile from "../pages/Profile";
 import Attendance from "../pages/Attendance";
 import RegistrationRequests from "../pages/RegistrationRequests";
+import Categories from "../pages/Categories";
+import ForgotPassword from "../pages/ForgotPassword";
+import ResetPassword from "../pages/ResetPassword";
 
 // Teacher Pages Imports
 import TeacherLayout from "../layout/TeacherLayout";
@@ -24,7 +27,7 @@ import TeacherResources from "../pages/teacher/TeacherResources";
 import TeacherAttendance from "../pages/teacher/TeacherAttendance";
 import TeacherMessages from "../pages/teacher/TeacherMessages";
 
-// Student Pages Imports ✅ (تمت الإضافة)
+// Student Pages Imports
 import StudentLayout from "../layout/StudentLayout";
 import StudentDashboard from "../pages/student/StudentDashboard";
 import StudentResources from "../pages/student/StudentResources";
@@ -32,9 +35,7 @@ import StudentAttendance from "../pages/student/StudentAttendance";
 import StudentProfile from "../pages/student/StudentProfile";
 import StudentClasses from "../pages/student/StudentClasses";
 import StudentMessages from "../pages/student/StudentMessages";
- import StudentSchedule from "../pages/student/StudentSchedule";
-
-
+import StudentSchedule from "../pages/student/StudentSchedule";
 
 // Public Pages Imports
 import PublicLayout from "../layout/PublicLayout";
@@ -62,6 +63,10 @@ export default function AppRouter() {
         {/* Login */}
         <Route path="/login" element={<Login />} />
 
+        {/* Forgot / Reset Password */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
         {/* Admin routes */}
         <Route
           path="/dashboard"
@@ -83,6 +88,7 @@ export default function AppRouter() {
           <Route path="profile" element={<Profile />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="registration-requests" element={<RegistrationRequests />} />
+          <Route path="formations" element={<Categories />} />
         </Route>
 
         {/* Teacher routes */}
@@ -102,7 +108,7 @@ export default function AppRouter() {
           <Route path="messages" element={<TeacherMessages />} />
         </Route>
 
-        {/* Student routes ✅ (تمت الإضافة هنا) */}
+        {/* Student routes */}
         <Route
           path="/student"
           element={
@@ -117,10 +123,7 @@ export default function AppRouter() {
           <Route path="profile" element={<StudentProfile />} />
           <Route path="classes" element={<StudentClasses />} />
           <Route path="messages" element={<StudentMessages />} />
-         
-
-
-         <Route path="schedule" element={<StudentSchedule />} />
+          <Route path="schedule" element={<StudentSchedule />} />
         </Route>
 
       </Routes>
