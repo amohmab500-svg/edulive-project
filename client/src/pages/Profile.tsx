@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { User, Mail, Phone, Lock, Save, Eye, EyeOff } from "lucide-react";
 import axios from "axios";
+import { getToken } from "../services/auth";
 
 const API = "http://localhost:5000/api";
 
@@ -18,7 +19,6 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"info" | "password">("info");
 
-  // بيانات النموذج
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
@@ -40,13 +40,15 @@ export default function Profile() {
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
+  const headers = { Authorization: `Bearer ${getToken()}` };
+
   useEffect(() => {
     fetchProfile();
   }, []);
 
   const fetchProfile = async () => {
     try {
-      const res = await axios.get(`${API}/profile`);
+      const res = await axios.get(`${API}/profile`, { headers });
       setProfile(res.data);
       setFormData({
         full_name: res.data.full_name,
@@ -63,14 +65,12 @@ export default function Profile() {
   const handleUpdateProfile = async () => {
     setSuccessMsg("");
     setErrorMsg("");
-
     if (!formData.full_name || !formData.email) {
       setErrorMsg("Nom et email sont obligatoires");
       return;
     }
-
     try {
-      await axios.put(`${API}/profile`, formData);
+      await axios.put(`${API}/profile`, formData, { headers });
       setSuccessMsg("Profil mis à jour avec succès ✓");
       fetchProfile();
     } catch (err: any) {
@@ -81,27 +81,23 @@ export default function Profile() {
   const handleChangePassword = async () => {
     setSuccessMsg("");
     setErrorMsg("");
-
     if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) {
       setErrorMsg("Tous les champs sont obligatoires");
       return;
     }
-
     if (passwordData.new_password !== passwordData.confirm_password) {
       setErrorMsg("Les nouveaux mots de passe ne correspondent pas");
       return;
     }
-
     if (passwordData.new_password.length < 6) {
       setErrorMsg("Le mot de passe doit contenir au moins 6 caractères");
       return;
     }
-
     try {
       await axios.put(`${API}/profile/password`, {
         current_password: passwordData.current_password,
         new_password: passwordData.new_password,
-      });
+      }, { headers });
       setSuccessMsg("Mot de passe modifié avec succès ✓");
       setPasswordData({ current_password: "", new_password: "", confirm_password: "" });
     } catch (err: any) {
@@ -128,7 +124,6 @@ export default function Profile() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Mon Profil</h1>
         <p className="mt-1 text-slate-500">Gérez vos informations personnelles</p>
@@ -148,7 +143,6 @@ export default function Profile() {
             </span>
           </div>
         </div>
-
         <div className="mt-4 flex gap-6 border-t pt-4 text-sm text-slate-500">
           <span>Membre depuis : <strong className="text-slate-700">{profile?.created_at ? formatDate(profile.created_at) : "-"}</strong></span>
           {profile?.phone && <span>Tél : <strong className="text-slate-700">{profile.phone}</strong></span>}
@@ -165,7 +159,6 @@ export default function Profile() {
         </button>
       </div>
 
-      {/* Messages */}
       {successMsg && (
         <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-green-700 text-sm">
           {successMsg}
@@ -181,12 +174,9 @@ export default function Profile() {
       {activeTab === "info" && (
         <div className="rounded-2xl bg-white p-6 shadow-sm">
           <h2 className="mb-6 text-xl font-semibold text-slate-800">Modifier les informations</h2>
-
           <div className="space-y-5">
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Nom complet *
-              </label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Nom complet *</label>
               <div className="relative">
                 <User size={18} className="absolute left-3 top-3.5 text-slate-400" />
                 <input
@@ -198,11 +188,8 @@ export default function Profile() {
                 />
               </div>
             </div>
-
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Email *
-              </label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Email *</label>
               <div className="relative">
                 <Mail size={18} className="absolute left-3 top-3.5 text-slate-400" />
                 <input
@@ -214,11 +201,8 @@ export default function Profile() {
                 />
               </div>
             </div>
-
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Téléphone
-              </label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Téléphone</label>
               <div className="relative">
                 <Phone size={18} className="absolute left-3 top-3.5 text-slate-400" />
                 <input
@@ -230,13 +214,11 @@ export default function Profile() {
                 />
               </div>
             </div>
-
             <button
               onClick={handleUpdateProfile}
               className="flex items-center gap-2 rounded-xl bg-blue-500 px-6 py-3 text-white hover:bg-blue-600"
             >
-              <Save size={18} />
-              Enregistrer
+              <Save size={18} /> Enregistrer
             </button>
           </div>
         </div>
@@ -246,13 +228,9 @@ export default function Profile() {
       {activeTab === "password" && (
         <div className="rounded-2xl bg-white p-6 shadow-sm">
           <h2 className="mb-6 text-xl font-semibold text-slate-800">Changer le mot de passe</h2>
-
           <div className="space-y-5 max-w-md">
-            {/* كلمة المرور الحالية */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Mot de passe actuel
-              </label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Mot de passe actuel</label>
               <div className="relative">
                 <Lock size={18} className="absolute left-3 top-3.5 text-slate-400" />
                 <input
@@ -262,20 +240,13 @@ export default function Profile() {
                   className="w-full rounded-xl border border-slate-300 py-3 pl-10 pr-10 outline-none focus:border-blue-500"
                   placeholder="••••••••"
                 />
-                <button
-                  onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}
-                  className="absolute right-3 top-3.5 text-slate-400"
-                >
+                <button onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })} className="absolute right-3 top-3.5 text-slate-400">
                   {showPasswords.current ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
-
-            {/* كلمة المرور الجديدة */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Nouveau mot de passe
-              </label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Nouveau mot de passe</label>
               <div className="relative">
                 <Lock size={18} className="absolute left-3 top-3.5 text-slate-400" />
                 <input
@@ -285,20 +256,13 @@ export default function Profile() {
                   className="w-full rounded-xl border border-slate-300 py-3 pl-10 pr-10 outline-none focus:border-blue-500"
                   placeholder="••••••••"
                 />
-                <button
-                  onClick={() => setShowPasswords({ ...showPasswords, new: !showPasswords.new })}
-                  className="absolute right-3 top-3.5 text-slate-400"
-                >
+                <button onClick={() => setShowPasswords({ ...showPasswords, new: !showPasswords.new })} className="absolute right-3 top-3.5 text-slate-400">
                   {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
-
-            {/* تأكيد كلمة المرور */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Confirmer le nouveau mot de passe
-              </label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Confirmer le nouveau mot de passe</label>
               <div className="relative">
                 <Lock size={18} className="absolute left-3 top-3.5 text-slate-400" />
                 <input
@@ -308,21 +272,16 @@ export default function Profile() {
                   className="w-full rounded-xl border border-slate-300 py-3 pl-10 pr-10 outline-none focus:border-blue-500"
                   placeholder="••••••••"
                 />
-                <button
-                  onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })}
-                  className="absolute right-3 top-3.5 text-slate-400"
-                >
+                <button onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })} className="absolute right-3 top-3.5 text-slate-400">
                   {showPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
-
             <button
               onClick={handleChangePassword}
               className="flex items-center gap-2 rounded-xl bg-blue-500 px-6 py-3 text-white hover:bg-blue-600"
             >
-              <Save size={18} />
-              Modifier le mot de passe
+              <Save size={18} /> Modifier le mot de passe
             </button>
           </div>
         </div>
