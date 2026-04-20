@@ -1,13 +1,15 @@
-
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
+
 const API = "http://localhost:5000/api";
 
 interface ContactSettings {
   primary_phone: string;
   email: string;
   address: string;
+  topbar_logo: string;
+  footer_logo: string;
 }
 
 interface SocialLink {
@@ -31,13 +33,29 @@ export default function PublicLayout() {
     <div className="min-h-screen flex flex-col">
       {/* Navbar */}
       <header className="sticky top-0 z-50 bg-white shadow-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        
+         
+            <div className="mx-auto flex max-w-7x1 items-center justify-between px-7 py-3 h-20">
+              
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 text-white font-bold text-lg">E</div>
-            <div>
-              <span className="text-xl font-bold text-slate-900">EDULIVE</span>
-              <p className="text-xs text-slate-400 leading-none">CONNECTED EDUCATIONAL COMMUNITY</p>
-            </div>
+            {contact?.topbar_logo ? (
+              <img
+                src={contact.topbar_logo}
+                alt="EduLive Logo"
+               
+               
+               className="h-16 w-auto max-w-[160px] object-contain"
+              />
+              
+            ) : (
+              <>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 text-white font-bold text-lg">E</div>
+                <div>
+                  <span className="text-xl font-bold text-slate-900">EDULIVE</span>
+                  <p className="text-xs text-slate-400 leading-none">CONNECTED EDUCATIONAL COMMUNITY</p>
+                </div>
+              </>
+            )}
           </Link>
 
           <nav className="hidden md:flex items-center gap-8">
@@ -73,12 +91,20 @@ export default function PublicLayout() {
         <Outlet />
       </main>
 
-      {/* Footer - Dynamic */}
+      {/* Footer */}
       <footer className="bg-slate-900 text-white">
         <div className="mx-auto max-w-7xl px-6 py-12">
           <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
             <div>
-              <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-orange-500 text-white font-bold text-2xl">E</div>
+              {contact?.footer_logo ? (
+                <img
+                  src={contact.footer_logo}
+                  alt="EduLive Footer Logo"
+                  className="h-20 w-auto max-w-[180px] object-contain"
+                />
+              ) : (
+                <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-orange-500 text-white font-bold text-2xl">E</div>
+              )}
             </div>
 
             <div>

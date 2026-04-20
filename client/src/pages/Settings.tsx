@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { Save, Plus, Pencil, Trash2, Globe, X } from "lucide-react";
+import { Save, Plus, Pencil, Trash2, X } from "lucide-react";
 import axios from "axios";
+import { getToken } from "../services/auth";
 
 const API = "http://localhost:5000/api";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("contact");
+  const headers = { Authorization: `Bearer ${getToken()}` };
 
   // Contact State
   const [contact, setContact] = useState({
-    primary_phone: "", email: "", address: "",
+    primary_phone: "",
+    email: "",
+    address: "",
+    topbar_logo: "",
+    footer_logo: "",
   });
 
   // Social Links State
@@ -47,26 +53,28 @@ export default function Settings() {
   // ===== CONTACT =====
   const fetchContact = async () => {
     try {
-      const res = await axios.get(`${API}/settings/contact`);
+      const res = await axios.get(`${API}/settings/contact`, { headers });
       if (res.data) setContact({
         primary_phone: res.data.primary_phone || "",
         email: res.data.email || "",
         address: res.data.address || "",
+        topbar_logo: res.data.topbar_logo || "",
+        footer_logo: res.data.footer_logo || "",
       });
     } catch {}
   };
 
   const saveContact = async () => {
     try {
-      await axios.put(`${API}/settings/contact`, contact);
-      showSuccess("Informations de contact enregistrées ✓");
+      await axios.put(`${API}/settings/contact`, contact, { headers });
+      showSuccess("Informations enregistrées ✓");
     } catch { alert("Erreur lors de la sauvegarde"); }
   };
 
   // ===== SOCIAL LINKS =====
   const fetchSocialLinks = async () => {
     try {
-      const res = await axios.get(`${API}/settings/social`);
+      const res = await axios.get(`${API}/settings/social`, { headers });
       setSocialLinks(res.data);
     } catch {}
   };
@@ -80,9 +88,9 @@ export default function Settings() {
   const saveSocial = async () => {
     try {
       if (editingSocial) {
-        await axios.put(`${API}/settings/social/${editingSocial.id}`, socialForm);
+        await axios.put(`${API}/settings/social/${editingSocial.id}`, socialForm, { headers });
       } else {
-        await axios.post(`${API}/settings/social`, socialForm);
+        await axios.post(`${API}/settings/social`, socialForm, { headers });
       }
       setSocialModal(false);
       fetchSocialLinks();
@@ -91,9 +99,8 @@ export default function Settings() {
   };
 
   const deleteSocial = async (id) => {
-    if (!window.confirm("Supprimer ce lien ?")) return;
     try {
-      await axios.delete(`${API}/settings/social/${id}`);
+      await axios.delete(`${API}/settings/social/${id}`, { headers });
       fetchSocialLinks();
     } catch {}
   };
@@ -101,7 +108,7 @@ export default function Settings() {
   // ===== REVIEWS =====
   const fetchReviews = async () => {
     try {
-      const res = await axios.get(`${API}/settings/reviews`);
+      const res = await axios.get(`${API}/settings/reviews`, { headers });
       setReviews(res.data);
     } catch {}
   };
@@ -115,9 +122,9 @@ export default function Settings() {
   const saveReview = async () => {
     try {
       if (editingReview) {
-        await axios.put(`${API}/settings/reviews/${editingReview.id}`, reviewForm);
+        await axios.put(`${API}/settings/reviews/${editingReview.id}`, reviewForm, { headers });
       } else {
-        await axios.post(`${API}/settings/reviews`, reviewForm);
+        await axios.post(`${API}/settings/reviews`, reviewForm, { headers });
       }
       setReviewModal(false);
       fetchReviews();
@@ -126,9 +133,8 @@ export default function Settings() {
   };
 
   const deleteReview = async (id) => {
-    if (!window.confirm("Supprimer cet avis ?")) return;
     try {
-      await axios.delete(`${API}/settings/reviews/${id}`);
+      await axios.delete(`${API}/settings/reviews/${id}`, { headers });
       fetchReviews();
     } catch {}
   };
@@ -136,7 +142,7 @@ export default function Settings() {
   // ===== SECTIONS =====
   const fetchSections = async () => {
     try {
-      const res = await axios.get(`${API}/settings/sections`);
+      const res = await axios.get(`${API}/settings/sections`, { headers });
       setSections(res.data);
     } catch {}
   };
@@ -150,9 +156,9 @@ export default function Settings() {
   const saveSection = async () => {
     try {
       if (editingSection) {
-        await axios.put(`${API}/settings/sections/${editingSection.id}`, sectionForm);
+        await axios.put(`${API}/settings/sections/${editingSection.id}`, sectionForm, { headers });
       } else {
-        await axios.post(`${API}/settings/sections`, sectionForm);
+        await axios.post(`${API}/settings/sections`, sectionForm, { headers });
       }
       setSectionModal(false);
       fetchSections();
@@ -161,9 +167,8 @@ export default function Settings() {
   };
 
   const deleteSection = async (id) => {
-    if (!window.confirm("Supprimer cette section ?")) return;
     try {
-      await axios.delete(`${API}/settings/sections/${id}`);
+      await axios.delete(`${API}/settings/sections/${id}`, { headers });
       fetchSections();
     } catch {}
   };
@@ -189,7 +194,11 @@ export default function Settings() {
       <div className="flex bg-slate-100 p-1.5 rounded-xl w-full">
         {["contact", "reseaux", "accueil", "sections", "avis"].map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)} className={tabClass(tab)}>
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab === "contact" ? "Contact"
+              : tab === "reseaux" ? "Reseaux"
+              : tab === "accueil" ? "Accueil"
+              : tab === "sections" ? "Sections"
+              : "Avis"}
           </button>
         ))}
       </div>
@@ -277,21 +286,58 @@ export default function Settings() {
 
         {/* ACCUEIL TAB */}
         {activeTab === "accueil" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <h3 className="font-bold">Logo de l'En-tête</h3>
-              <div className="border-2 border-dashed border-slate-200 rounded-2xl p-10 flex flex-col items-center">
-                <div className="w-32 h-12 bg-slate-100 rounded mb-4 flex items-center justify-center text-xs text-slate-400">Preview</div>
-                <input type="file" className="text-xs" />
+          <div className="space-y-6">
+            <h2 className="text-lg font-bold">Logos du Site</h2>
+            <p className="text-sm text-slate-500">
+              Utilisez des liens d'images externes (ex: imgur.com, cloudinary.com)
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <h3 className="font-semibold text-slate-700">Logo de l'En-tête</h3>
+                <input
+                  type="text"
+                  value={contact.topbar_logo}
+                  onChange={(e) => setContact({ ...contact, topbar_logo: e.target.value })}
+                  className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-400"
+                  placeholder="https://exemple.com/logo.png"
+                />
+                {contact.topbar_logo ? (
+                  <div className="rounded-xl border border-slate-100 p-4 flex items-center justify-center bg-slate-50">
+                    <img src={contact.topbar_logo} alt="Logo" className="h-12 object-contain" />
+                  </div>
+                ) : (
+                  <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 flex items-center justify-center bg-slate-50">
+                    <p className="text-sm text-slate-400">Aperçu du logo</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="font-semibold text-slate-700">Logo du Pied de Page</h3>
+                <input
+                  type="text"
+                  value={contact.footer_logo}
+                  onChange={(e) => setContact({ ...contact, footer_logo: e.target.value })}
+                  className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-400"
+                  placeholder="https://exemple.com/logo-footer.png"
+                />
+                {contact.footer_logo ? (
+                  <div className="rounded-xl border border-slate-100 p-4 flex items-center justify-center bg-slate-50">
+                    <img src={contact.footer_logo} alt="Footer Logo" className="h-12 object-contain" />
+                  </div>
+                ) : (
+                  <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 flex items-center justify-center bg-slate-50">
+                    <p className="text-sm text-slate-400">Aperçu du logo</p>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="space-y-4">
-              <h3 className="font-bold">Logo du Pied de Page</h3>
-              <div className="border-2 border-dashed border-slate-200 rounded-2xl p-10 flex flex-col items-center">
-                <div className="w-20 h-20 bg-slate-100 rounded-full mb-4 flex items-center justify-center text-xs text-slate-400">Preview</div>
-                <input type="file" className="text-xs" />
-              </div>
-            </div>
+
+            <button onClick={saveContact}
+              className="bg-blue-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:bg-blue-700">
+              <Save size={18} /> Enregistrer
+            </button>
           </div>
         )}
 
@@ -426,10 +472,16 @@ export default function Settings() {
                   className="w-full rounded-xl border p-3 outline-none focus:border-blue-500"
                   placeholder="https://..." />
               </div>
-              <button onClick={saveSocial}
-                className="w-full rounded-xl bg-blue-600 py-3 text-white font-medium hover:bg-blue-700">
-                Enregistrer
-              </button>
+              <div className="flex gap-3">
+                <button onClick={() => setSocialModal(false)}
+                  className="flex-1 rounded-xl border border-slate-200 py-2 text-sm text-slate-600 hover:bg-slate-50">
+                  Annuler
+                </button>
+                <button onClick={saveSocial}
+                  className="flex-1 rounded-xl bg-blue-600 py-2 text-white font-medium hover:bg-blue-700">
+                  Enregistrer
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -472,10 +524,16 @@ export default function Settings() {
                   <option value="Inactive">Inactive</option>
                 </select>
               </div>
-              <button onClick={saveReview}
-                className="w-full rounded-xl bg-blue-600 py-3 text-white font-medium hover:bg-blue-700">
-                Enregistrer
-              </button>
+              <div className="flex gap-3">
+                <button onClick={() => setReviewModal(false)}
+                  className="flex-1 rounded-xl border border-slate-200 py-2 text-sm text-slate-600 hover:bg-slate-50">
+                  Annuler
+                </button>
+                <button onClick={saveReview}
+                  className="flex-1 rounded-xl bg-blue-600 py-2 text-white font-medium hover:bg-blue-700">
+                  Enregistrer
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -524,10 +582,16 @@ export default function Settings() {
                   <option value={0}>Inactive</option>
                 </select>
               </div>
-              <button onClick={saveSection}
-                className="w-full rounded-xl bg-blue-600 py-3 text-white font-medium hover:bg-blue-700">
-                Enregistrer
-              </button>
+              <div className="flex gap-3">
+                <button onClick={() => setSectionModal(false)}
+                  className="flex-1 rounded-xl border border-slate-200 py-2 text-sm text-slate-600 hover:bg-slate-50">
+                  Annuler
+                </button>
+                <button onClick={saveSection}
+                  className="flex-1 rounded-xl bg-blue-600 py-2 text-white font-medium hover:bg-blue-700">
+                  Enregistrer
+                </button>
+              </div>
             </div>
           </div>
         </div>

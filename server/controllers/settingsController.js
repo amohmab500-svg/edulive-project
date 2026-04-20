@@ -8,17 +8,16 @@ exports.getContactSettings = (req, res) => {
 };
 
 exports.updateContactSettings = (req, res) => {
-    const { primary_phone, email, address } = req.body;
-    db.query(
-        'UPDATE site_contact_settings SET primary_phone=?, email=?, address=? WHERE id=1',
-        [primary_phone, email, address],
-        (err) => {
-            if (err) return res.status(500).json({ message: "Error updating", error: err.message });
-            res.json({ message: "Contact settings updated successfully" });
-        }
-    );
+  const { primary_phone, email, address, topbar_logo, footer_logo } = req.body;
+  db.query(
+    'UPDATE site_contact_settings SET primary_phone=?, email=?, address=?, topbar_logo=?, footer_logo=? WHERE id=1',
+    [primary_phone, email, address, topbar_logo || null, footer_logo || null],
+    (err) => {
+      if (err) return res.status(500).json({ message: "Error", error: err.message });
+      res.json({ message: "Settings updated successfully" });
+    }
+  );
 };
-
 exports.getSocialLinks = (req, res) => {
     db.query('SELECT * FROM social_links ORDER BY id ASC', (err, rows) => {
         if (err) return res.status(500).json({ message: "Error", error: err.message });

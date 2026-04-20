@@ -22,28 +22,34 @@ export default function ContactMessages() {
     fetchMessages();
   }, []);
 
+  
   const fetchMessages = async () => {
-    try {
-      const res = await axios.get(`${API}/contact-messages`);
-      setMessagesData(res.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const token = localStorage.getItem("token");
+    const res = await axios.get(`${API}/contact-messages`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setMessagesData(res.data);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const handleDeleteMessage = async (id: number) => {
-    if (!window.confirm("Voulez-vous vraiment supprimer ce message ?")) return;
-    try {
-      await axios.delete(`${API}/contact-messages/${id}`);
-      setMessagesData((prev) => prev.filter((item) => item.id !== id));
-      if (selectedMessage?.id === id) setSelectedMessage(null);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
+const handleDeleteMessage = async (id: number) => {
+  if (!window.confirm("Voulez-vous vraiment supprimer ce message ?")) return;
+  try {
+    const token = localStorage.getItem("token");
+    await axios.delete(`${API}/contact-messages/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setMessagesData((prev) => prev.filter((item) => item.id !== id));
+    if (selectedMessage?.id === id) setSelectedMessage(null);
+  } catch (err) {
+    console.error(err);
+  }
+};
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("fr-FR", {
       day: "numeric", month: "short", year: "numeric",

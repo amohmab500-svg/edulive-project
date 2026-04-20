@@ -6,8 +6,9 @@ const API = "http://localhost:5000/api";
 
 interface Review {
   id: number;
-  name: string;
-  comment: string;
+  full_name: string;
+  job_title: string | null;
+  content: string;
   status: string;
 }
 
@@ -17,7 +18,8 @@ export default function AvisPage() {
 
   useEffect(() => {
     axios.get(`${API}/settings/reviews`)
-      .then((res) => setReviews(res.data))
+      
+      .then((res) => setReviews(res.data.filter((r: Review) => r.status.toLowerCase() === "active")))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -40,22 +42,22 @@ export default function AvisPage() {
               <div key={review.id} className="rounded-2xl bg-white p-6 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-600 font-bold text-lg">
-                    {review.name.charAt(0).toUpperCase()}
+                    {review.full_name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-800">{review.name}</p>
-                    <div className="flex gap-1 text-yellow-400 text-sm">
-                      ⭐⭐⭐⭐⭐
-                    </div>
+                    <p className="font-semibold text-slate-800">{review.full_name}</p>
+                    {review.job_title && (
+                      <p className="text-xs text-slate-400">{review.job_title}</p>
+                    )}
+                    <div className="flex gap-1 text-yellow-400 text-sm">⭐⭐⭐⭐⭐</div>
                   </div>
                 </div>
-                <p className="text-slate-600 leading-relaxed">"{review.comment}"</p>
+                <p className="text-slate-600 leading-relaxed">"{review.content}"</p>
               </div>
             ))}
           </div>
         )}
 
-        {/* CTA */}
         <div className="mt-16 text-center">
           <h2 className="text-2xl font-bold text-slate-900">Prêt à rejoindre notre communauté ?</h2>
           <Link

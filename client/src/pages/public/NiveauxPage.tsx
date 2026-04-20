@@ -9,6 +9,8 @@ interface Level {
   name: string;
   description: string;
   image?: string;
+  price?: number | null;
+  duration?: string | null;
 }
 
 export default function NiveauxPage() {
@@ -43,32 +45,63 @@ export default function NiveauxPage() {
               <div
                 key={level.id}
                 onClick={() => handleLevelClick(level.id)}
-                className="group relative h-64 cursor-pointer overflow-hidden rounded-2xl"
+                className="group relative cursor-pointer overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-300"
               >
                 {/* Image */}
-                {level.image ? (
-                  <img
-                    src={level.image}
-                    alt={level.name}
-                    className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-slate-300" />
-                )}
-
-                {/* Blue overlay like reference site */}
-                <div className="absolute inset-0 bg-blue-900/50 group-hover:bg-blue-900/40 transition duration-300" />
-
-                {/* Content */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm mb-3">
-                    <span className="text-2xl">🎓</span>
-                  </div>
-                  <h2 className="text-2xl font-bold">{level.name}</h2>
-                  {level.description && (
-                    <p className="mt-2 text-sm text-white/80 text-center px-4">{level.description}</p>
+                <div className="relative h-52">
+                  {level.image ? (
+                    <img
+                      src={level.image}
+                      alt={level.name}
+                      className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-slate-300" />
                   )}
+                  {/* Blue overlay */}
+                  <div className="absolute inset-0 bg-blue-900/50 group-hover:bg-blue-900/40 transition duration-300" />
+
+                  {/* Content on image */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm mb-3">
+                      <span className="text-2xl">🎓</span>
+                    </div>
+                    <h2 className="text-2xl font-bold">{level.name}</h2>
+                    {level.description && (
+                      <p className="mt-2 text-sm text-white/80 text-center px-4">{level.description}</p>
+                    )}
+                  </div>
                 </div>
+
+                {/* Prix & Durée */}
+                {(level.price || level.duration) && (
+                  <div className="bg-white px-5 py-4 flex items-center justify-between">
+                    {level.price ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">💰</span>
+                        <div>
+                          <p className="text-xs text-slate-400">Prix</p>
+                          <p className="font-bold text-green-600 text-sm">{level.price} DT</p>
+                        </div>
+                      </div>
+                    ) : <div />}
+
+                    {level.duration ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">⏱️</span>
+                        <div>
+                          <p className="text-xs text-slate-400">Durée</p>
+                          <p className="font-bold text-blue-600 text-sm">{level.duration}</p>
+                        </div>
+                      </div>
+                    ) : <div />}
+
+                    <div className="flex items-center gap-1 text-orange-500 text-sm font-medium">
+                      S'inscrire
+                      <span>→</span>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
