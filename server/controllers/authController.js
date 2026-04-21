@@ -28,7 +28,7 @@ const login = (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
+     { id: user.id, email: user.email, role: user.role, teacher_id: user.teacher_id || null, student_id: user.student_id || null },
       JWT_SECRET,
       { expiresIn: "24h" }
     );
@@ -44,6 +44,7 @@ const login = (req, res) => {
     });
   });
 };
+
 
 const getMe = (req, res) => {
   db.query(

@@ -24,6 +24,9 @@ type Teacher = {
 };
 
 export default function Groups() {
+  const token = localStorage.getItem("token");
+  const headers = { Authorization: `Bearer ${token}` };
+
   const [groupsData, setGroupsData] = useState<Group[]>([]);
   const [levelsData, setLevelsData] = useState<Level[]>([]);
   const [teachersData, setTeachersData] = useState<Teacher[]>([]);
@@ -48,11 +51,10 @@ export default function Groups() {
   const fetchGroups = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/groups");
+      const res = await axios.get("http://localhost:5000/api/groups", { headers });
       setGroupsData(res.data);
     } catch (error) {
       console.error("Error fetching groups:", error);
-      alert("Erreur lors du chargement des groupes");
     } finally {
       setLoading(false);
     }
@@ -60,7 +62,7 @@ export default function Groups() {
 
   const fetchLevels = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/levels");
+      const res = await axios.get("http://localhost:5000/api/levels", { headers });
       setLevelsData(res.data);
     } catch (error) {
       console.error("Error fetching levels:", error);
@@ -69,7 +71,7 @@ export default function Groups() {
 
   const fetchTeachers = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/teachers");
+      const res = await axios.get("http://localhost:5000/api/teachers", { headers });
       setTeachersData(res.data);
     } catch (error) {
       console.error("Error fetching teachers:", error);
@@ -105,11 +107,7 @@ export default function Groups() {
   };
 
   const handleSaveGroup = async () => {
-    if (!formData.name.trim()) {
-      alert("Veuillez entrer le nom du groupe");
-      return;
-    }
-
+    if (!formData.name.trim()) return alert("Veuillez entrer le nom du groupe");
     try {
       const payload = {
         name: formData.name,
@@ -118,33 +116,25 @@ export default function Groups() {
         schedule: formData.schedule,
         meeting_link: formData.meeting_link,
       };
-
       if (editingId !== null) {
-        await axios.put(`http://localhost:5000/api/groups/${editingId}`, payload);
+        await axios.put(`http://localhost:5000/api/groups/${editingId}`, payload, { headers });
       } else {
-        await axios.post("http://localhost:5000/api/groups", payload);
+        await axios.post("http://localhost:5000/api/groups", payload, { headers });
       }
-
       await fetchGroups();
       setOpenModal(false);
       resetForm();
     } catch (error) {
-      console.error("Error saving group:", error);
       alert("Erreur lors de l'enregistrement du groupe");
     }
   };
 
   const handleDeleteGroup = async (id: number) => {
-    const confirmed = window.confirm(
-      "Voulez-vous vraiment supprimer ce groupe ?"
-    );
-    if (!confirmed) return;
-
+    if (!window.confirm("Voulez-vous vraiment supprimer ce groupe ?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/groups/${id}`);
+      await axios.delete(`http://localhost:5000/api/groups/${id}`, { headers });
       await fetchGroups();
     } catch (error) {
-      console.error("Error deleting group:", error);
       alert("Erreur lors de la suppression du groupe");
     }
   };
@@ -153,20 +143,14 @@ export default function Groups() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            Gestion des Groupes
-          </h1>
-          <p className="mt-1 text-slate-500">
-            Gérez les groupes et leurs informations
-          </p>
+          <h1 className="text-3xl font-bold text-slate-900">Gestion des Groupes</h1>
+          <p className="mt-1 text-slate-500">Gérez les groupes et leurs informations</p>
         </div>
-
         <button
           onClick={handleOpenAddModal}
           className="flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-3 text-white hover:bg-blue-600"
         >
-          <Plus size={18} />
-          Nouveau Groupe
+          <Plus size={18} /> Nouveau Groupe
         </button>
       </div>
 
@@ -174,7 +158,6 @@ export default function Groups() {
         <h2 className="mb-6 text-xl font-semibold text-slate-800">
           Groupes ({groupsData.length})
         </h2>
-
         {loading ? (
           <p className="text-slate-500">Chargement...</p>
         ) : (
@@ -189,7 +172,6 @@ export default function Groups() {
                 <th className="pb-3 text-right">Actions</th>
               </tr>
             </thead>
-
             <tbody className="divide-y">
               {groupsData.map((group) => (
                 <tr key={group.id} className="h-20">
@@ -199,32 +181,20 @@ export default function Groups() {
                   <td className="text-slate-600">{group.schedule || "-"}</td>
                   <td className="text-slate-600">
                     {group.meeting_link ? (
-                      <a
-                        href={group.meeting_link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
+                      <a href={group.meeting_link} target="_blank" rel="noreferrer"
+                        className="text-blue-600 hover:underline">
                         Ouvrir
                       </a>
-                    ) : (
-                      "-"
-                    )}
+                    ) : "-"}
                   </td>
-
                   <td className="text-right">
                     <div className="flex justify-end gap-3">
-                      <button
-                        onClick={() => handleOpenEditModal(group)}
-                        className="rounded-lg p-2 hover:bg-slate-100"
-                      >
+                      <button onClick={() => handleOpenEditModal(group)}
+                        className="rounded-lg p-2 hover:bg-slate-100">
                         <Pencil size={18} className="text-slate-600" />
                       </button>
-
-                      <button
-                        onClick={() => handleDeleteGroup(group.id)}
-                        className="rounded-lg p-2 hover:bg-red-50"
-                      >
+                      <button onClick={() => handleDeleteGroup(group.id)}
+                        className="rounded-lg p-2 hover:bg-red-50">
                         <Trash2 size={18} className="text-red-500" />
                       </button>
                     </div>
@@ -243,108 +213,63 @@ export default function Groups() {
               <h2 className="text-xl font-semibold text-slate-800">
                 {editingId !== null ? "Modifier le Groupe" : "Ajouter un Groupe"}
               </h2>
-
-              <button
-                onClick={() => {
-                  setOpenModal(false);
-                  resetForm();
-                }}
-                className="rounded-lg p-2 hover:bg-slate-100"
-              >
+              <button onClick={() => { setOpenModal(false); resetForm(); }}
+                className="rounded-lg p-2 hover:bg-slate-100">
                 <X size={20} className="text-slate-600" />
               </button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Nom du groupe
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                <label className="mb-1 block text-sm font-medium text-slate-700">Nom du groupe</label>
+                <input type="text" value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Ex: G1 - A1"
-                  className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500"
-                />
+                  className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500" />
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Niveau
-                </label>
-                <select
-                  value={formData.level_id}
-                  onChange={(e) =>
-                    setFormData({ ...formData, level_id: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500"
-                >
+                <label className="mb-1 block text-sm font-medium text-slate-700">Niveau</label>
+                <select value={formData.level_id}
+                  onChange={(e) => setFormData({ ...formData, level_id: e.target.value })}
+                  className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500">
                   <option value="">Sélectionner un niveau</option>
                   {levelsData.map((level) => (
-                    <option key={level.id} value={level.id}>
-                      {level.name}
-                    </option>
+                    <option key={level.id} value={level.id}>{level.name}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Enseignant
-                </label>
-                <select
-                  value={formData.teacher_id}
-                  onChange={(e) =>
-                    setFormData({ ...formData, teacher_id: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500"
-                >
+                <label className="mb-1 block text-sm font-medium text-slate-700">Enseignant</label>
+                <select value={formData.teacher_id}
+                  onChange={(e) => setFormData({ ...formData, teacher_id: e.target.value })}
+                  className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500">
                   <option value="">Sélectionner un enseignant</option>
                   {teachersData.map((teacher) => (
-                    <option key={teacher.id} value={teacher.id}>
-                      {teacher.name}
-                    </option>
+                    <option key={teacher.id} value={teacher.id}>{teacher.name}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Horaire
-                </label>
-                <input
-                  type="text"
-                  value={formData.schedule}
-                  onChange={(e) =>
-                    setFormData({ ...formData, schedule: e.target.value })
-                  }
+                <label className="mb-1 block text-sm font-medium text-slate-700">Horaire</label>
+                <input type="text" value={formData.schedule}
+                  onChange={(e) => setFormData({ ...formData, schedule: e.target.value })}
                   placeholder="Lundi / Mercredi - 18:00"
-                  className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500"
-                />
+                  className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500" />
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Lien Meet
-                </label>
-                <input
-                  type="text"
-                  value={formData.meeting_link}
-                  onChange={(e) =>
-                    setFormData({ ...formData, meeting_link: e.target.value })
-                  }
+                <label className="mb-1 block text-sm font-medium text-slate-700">Lien Meet</label>
+                <input type="text" value={formData.meeting_link}
+                  onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })}
                   placeholder="https://meet.google.com/..."
-                  className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500"
-                />
+                  className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-blue-500" />
               </div>
 
-              <button
-                onClick={handleSaveGroup}
-                className="w-full rounded-lg bg-blue-500 py-3 font-medium text-white hover:bg-blue-600"
-              >
+              <button onClick={handleSaveGroup}
+                className="w-full rounded-lg bg-blue-500 py-3 font-medium text-white hover:bg-blue-600">
                 {editingId !== null ? "Mettre à jour" : "Ajouter"}
               </button>
             </div>

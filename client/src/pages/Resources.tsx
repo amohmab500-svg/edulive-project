@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import {
-  Pencil, Trash2, Plus, X, FileText, Video, Link,
-  Search, BookOpen, ExternalLink, Play
-} from "lucide-react";
+import { Plus, Trash2, Eye, X, FileText, Video, Link as LinkIcon, Play, Upload } from "lucide-react";
+
+const API = "http://localhost:5000/api";
 
 type Resource = {
   id: number;
@@ -19,6 +18,8 @@ type Resource = {
   level_name?: string;
   teacher_name?: string;
 };
+
+type Group = { id: number; name: string };
 
 const getYoutubeThumbnail = (url: string) => {
   const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
@@ -40,248 +41,191 @@ export default function Resources() {
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
 
-  const [resourcesData, setResourcesData] = useState<Resource[]>([]);
-  const [levelsData, setLevelsData] = useState<any[]>([]);
-  const [openModal, setOpenModal] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [selectedGroup, setSelectedGroup] = useState<number | "">("");
+  const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [showModal, setShowModal] = useState(false);
   const [previewVideo, setPreviewVideo] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const [uploading, setUploading] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     title: "",
     description: "",
     type: "pdf",
     file_url: "",
     external_url: "",
-    level_id: "",
-    teacher_id: "",
   });
 
   useEffect(() => {
-    fetchResources();
-    fetchLevels();
+    axios.get(`${API}/groups`, { headers }).then((res) => {
+      setGroups(res.data);
+      if (res.data.length > 0) setSelectedGroup(res.data[0].id);
+    });
   }, []);
+
+  useEffect(() => {
+    if (selectedGroup !== "") fetchResources();
+  }, [selectedGroup]);
 
   const fetchResources = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/resources", { headers });
-      setResourcesData(res.data);
-    } catch (error) {
-      console.error(error);
+      const res = await axios.get(`${API}/resources?group_id=${selectedGroup}`, { headers });
+      setResources(res.data);
+    } catch {
+      setResources([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchLevels = async () => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formDataUpload = new FormData();
+    formDataUpload.append("file", file);
     try {
-      const res = await axios.get("http://localhost:5000/api/levels", { headers });
-      setLevelsData(res.data);
-    } catch (error) {
-      console.error(error);
+      setUploading(true);
+      const res = await axios.post(`${API}/resources/upload`, formDataUpload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      setForm({ ...form, file_url: res.data.file_url });
+    } catch {
+      alert("Erreur lors de l'upload du fichier");
+    } finally {
+      setUploading(false);
     }
   };
 
-  const handleOpenAddModal = () => {
-    setFormData({
-      title: "", description: "", type: "pdf",
-      file_url: "", external_url: "", level_id: "", teacher_id: "",
-    });
-    setEditingId(null);
-    setOpenModal(true);
-  };
-
-  const handleOpenEditModal = (res: Resource) => {
-    setEditingId(res.id);
-    setFormData({
-      title: res.title,
-      description: res.description || "",
-      type: res.type,
-      file_url: res.file_url || "",
-      external_url: res.external_url || "",
-      level_id: res.level_id ? String(res.level_id) : "",
-      teacher_id: res.teacher_id ? String(res.teacher_id) : "",
-    });
-    setOpenModal(true);
-  };
-
-  const handleSaveResource = async () => {
-    if (!formData.title.trim()) return alert("Le titre est obligatoire");
+  const handleAdd = async () => {
+    if (!form.title) return alert("Le titre est obligatoire");
+    if (form.type === "pdf" && !form.file_url) return alert("Le fichier est obligatoire");
+    if ((form.type === "video" || form.type === "link") && !form.external_url)
+      return alert("Le lien est obligatoire");
     try {
-      const payload = {
-        title: formData.title,
-        description: formData.description,
-        type: formData.type,
-        file_url: formData.type === "pdf" ? formData.file_url : null,
-        external_url: formData.type !== "pdf" ? formData.external_url : null,
-        level_id: formData.level_id ? Number(formData.level_id) : null,
-        group_id: null,
-        teacher_id: formData.teacher_id ? Number(formData.teacher_id) : null,
-      };
-      if (editingId) {
-        await axios.put(`http://localhost:5000/api/resources/${editingId}`, payload, { headers });
-      } else {
-        await axios.post("http://localhost:5000/api/resources", payload, { headers });
-      }
-      await fetchResources();
-      setOpenModal(false);
-    } catch (error) {
-      alert("Erreur lors de l'enregistrement");
+      await axios.post(`${API}/resources`, {
+        title: form.title,
+        description: form.description,
+        type: form.type,
+        file_url: form.type === "pdf" ? form.file_url : null,
+        external_url: form.type !== "pdf" ? form.external_url : null,
+        group_id: selectedGroup,
+      }, { headers });
+      setShowModal(false);
+      setForm({ title: "", description: "", type: "pdf", file_url: "", external_url: "" });
+      fetchResources();
+    } catch {
+      alert("Erreur lors de l'ajout");
     }
-  };
-
-  const handleDeleteResource = (id: number) => {
-    setDeleteTargetId(id);
-    setDeleteModal(true);
   };
 
   const confirmDelete = async () => {
     if (!deleteTargetId) return;
     try {
-      await axios.delete(`http://localhost:5000/api/resources/${deleteTargetId}`, { headers });
-      await fetchResources();
+      await axios.delete(`${API}/resources/${deleteTargetId}`, { headers });
+      fetchResources();
       setDeleteModal(false);
       setDeleteTargetId(null);
-    } catch (error) {
+    } catch {
       alert("Erreur lors de la suppression");
     }
   };
 
-  const filteredResources = resourcesData.filter((r) =>
-    r.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "pdf": return <div className="p-2 bg-red-50 text-red-600 rounded-lg"><FileText size={20} /></div>;
-      case "video": return <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Video size={20} /></div>;
-      default: return <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><Link size={20} /></div>;
-    }
-  };
-
-  const getTypeBadge = (type: string) => {
-    switch (type) {
-      case "pdf": return "bg-red-100 text-red-600";
-      case "video": return "bg-blue-100 text-blue-600";
-      default: return "bg-orange-100 text-orange-600";
-    }
+    if (type === "pdf") return <FileText className="text-red-500" size={20} />;
+    if (type === "video") return <Video className="text-blue-500" size={20} />;
+    return <LinkIcon className="text-orange-500" size={20} />;
   };
 
   return (
     <div className="space-y-6">
-
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Ressources Pédagogiques</h1>
-          <p className="text-slate-500 mt-1 flex items-center gap-2">
-            <BookOpen size={18} /> Gérez vos fichiers, vidéos et liens de cours
-          </p>
-        </div>
-        <button
-          onClick={handleOpenAddModal}
-          className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-medium text-white hover:bg-indigo-700"
-        >
-          <Plus size={18} /> Nouvelle Ressource
-        </button>
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">Gestion des ressources</h1>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-        <input
-          type="text"
-          placeholder="Rechercher une ressource..."
-          className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-
-      {/* Table */}
       <div className="rounded-2xl bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-800 mb-1">Sélectionner un groupe</h2>
+        <p className="text-sm text-slate-500 mb-4">Choisissez un groupe pour gérer ses ressources</p>
+        <select
+          value={selectedGroup}
+          onChange={(e) => setSelectedGroup(Number(e.target.value))}
+          className="w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-blue-500"
+        >
+          {groups.map((g) => (
+            <option key={g.id} value={g.id}>{g.name}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="rounded-2xl bg-white p-6 shadow-sm">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-800">Ressources de groupe</h2>
+            <p className="text-sm text-slate-500">Gérez les ressources pédagogiques</p>
+          </div>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+          >
+            <Plus size={16} /> Ajouter une ressource
+          </button>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="border-b text-sm text-slate-500">
               <tr>
-                <th className="pb-4 px-2">Ressource</th>
-                <th className="pb-4 px-2">Type</th>
-                <th className="pb-4 px-2">Niveau</th>
-                <th className="pb-4 px-2">Enseignant</th>
-                <th className="pb-4 px-2">Aperçu</th>
-                <th className="pb-4 px-2 text-right">Actions</th>
+                <th className="pb-3 px-2">Type</th>
+                <th className="pb-3 px-2">Titre</th>
+                <th className="pb-3 px-2">Description</th>
+                <th className="pb-3 px-2">Date d'ajout</th>
+                <th className="pb-3 px-2 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {loading ? (
-                <tr><td colSpan={6} className="py-12 text-center text-slate-400">Chargement...</td></tr>
-              ) : filteredResources.length === 0 ? (
-                <tr><td colSpan={6} className="py-12 text-center text-slate-400">Aucune ressource trouvée.</td></tr>
+                <tr><td colSpan={5} className="py-12 text-center text-slate-400">Chargement...</td></tr>
+              ) : resources.length === 0 ? (
+                <tr><td colSpan={5} className="py-12 text-center text-slate-400">Aucune ressource pour ce groupe.</td></tr>
               ) : (
-                filteredResources.map((res) => {
-                  const thumbnail = res.type === "video" && res.external_url
-                    ? getYoutubeThumbnail(res.external_url)
-                    : null;
+                resources.map((r) => {
+                  const thumbnail = r.type === "video" && r.external_url ? getYoutubeThumbnail(r.external_url) : null;
                   return (
-                    <tr key={res.id} className="hover:bg-slate-50 transition">
-                      <td className="py-4 px-2">
-                        <div className="flex items-center gap-3">
-                          {getTypeIcon(res.type)}
-                          <div>
-                            <p className="font-medium text-slate-800">{res.title}</p>
-                            {res.description && (
-                              <p className="text-xs text-slate-400 truncate max-w-[180px]">{res.description}</p>
-                            )}
-                          </div>
-                        </div>
+                    <tr key={r.id} className="h-16 hover:bg-slate-50 transition-colors">
+                      <td className="px-2">{getTypeIcon(r.type)}</td>
+                      <td className="px-2 font-medium text-slate-800">{r.title}</td>
+                      <td className="px-2 text-slate-500 text-sm">{r.description || "-"}</td>
+                      <td className="px-2 text-slate-500 text-sm">
+                        {new Date(r.created_at).toLocaleDateString("fr-FR")}
                       </td>
                       <td className="px-2">
-                        <span className={`rounded-full px-3 py-1 text-xs font-medium uppercase ${getTypeBadge(res.type)}`}>
-                          {res.type}
-                        </span>
-                      </td>
-                      <td className="px-2 text-sm text-slate-600">{res.level_name || "-"}</td>
-                      <td className="px-2 text-sm text-slate-600">{res.teacher_name || "-"}</td>
-                      <td className="px-2">
-                        {res.type === "video" && res.external_url ? (
-                          <button onClick={() => setPreviewVideo(res.external_url!)} className="relative group">
-                            {thumbnail ? (
-                              <div className="relative w-20 h-12 rounded-lg overflow-hidden">
-                                <img src={thumbnail} alt="thumbnail" className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/50 transition">
-                                  <Play size={16} className="text-white" />
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-1 text-blue-600 text-xs hover:underline">
-                                <Play size={14} /> Voir
-                              </div>
-                            )}
-                          </button>
-                        ) : res.type === "pdf" && res.file_url ? (
-                          <a href={res.file_url} target="_blank" rel="noreferrer"
-                            className="flex items-center gap-1 text-red-600 text-xs hover:underline">
-                            <ExternalLink size={14} /> Ouvrir
-                          </a>
-                        ) : res.type === "link" && res.external_url ? (
-                          <a href={res.external_url} target="_blank" rel="noreferrer"
-                            className="flex items-center gap-1 text-orange-600 text-xs hover:underline">
-                            <ExternalLink size={14} /> Ouvrir
-                          </a>
-                        ) : (
-                          <span className="text-slate-300 text-xs">-</span>
-                        )}
-                      </td>
-                      <td className="px-2 text-right">
                         <div className="flex justify-end gap-2">
-                          <button onClick={() => handleOpenEditModal(res)} className="rounded-lg p-2 hover:bg-slate-100">
-                            <Pencil size={16} className="text-slate-500" />
-                          </button>
-                          <button onClick={() => handleDeleteResource(res.id)} className="rounded-lg p-2 hover:bg-red-50">
-                            <Trash2 size={16} className="text-red-500" />
+                          {r.type === "video" && r.external_url ? (
+                            <button onClick={() => setPreviewVideo(r.external_url!)} className="rounded-lg p-2 hover:bg-slate-100">
+                              {thumbnail ? (
+                                <div className="relative w-16 h-10 rounded overflow-hidden">
+                                  <img src={thumbnail} className="w-full h-full object-cover" />
+                                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                    <Play size={12} className="text-white" />
+                                  </div>
+                                </div>
+                              ) : <Eye size={18} className="text-slate-600" />}
+                            </button>
+                          ) : (
+                            <a href={r.file_url || r.external_url || "#"} target="_blank" rel="noreferrer"
+                              className="rounded-lg p-2 hover:bg-slate-100">
+                              <Eye size={18} className="text-slate-600" />
+                            </a>
+                          )}
+                          <button onClick={() => { setDeleteTargetId(r.id); setDeleteModal(true); }}
+                            className="rounded-lg p-2 hover:bg-red-50">
+                            <Trash2 size={18} className="text-red-500" />
                           </button>
                         </div>
                       </td>
@@ -294,187 +238,141 @@ export default function Resources() {
         </div>
       </div>
 
-      {/* Modal Prévisualisation Vidéo */}
+      {/* Modal Vidéo */}
       {previewVideo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
           <div className="w-full max-w-3xl rounded-2xl bg-black overflow-hidden shadow-2xl">
             <div className="flex items-center justify-between px-4 py-3 bg-slate-900">
-              <p className="text-white text-sm font-medium">Aperçu Vidéo</p>
-              <button onClick={() => setPreviewVideo(null)} className="text-white hover:text-red-400">
-                <X size={20} />
-              </button>
+              <p className="text-white text-sm">Aperçu Vidéo</p>
+              <button onClick={() => setPreviewVideo(null)} className="text-white hover:text-red-400"><X size={20} /></button>
             </div>
             <div className="aspect-video">
-              <iframe
-                src={getVideoEmbedUrl(previewVideo)}
-                className="w-full h-full"
+              <iframe src={getVideoEmbedUrl(previewVideo)} className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+                allowFullScreen />
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal Ajout/Édition */}
-      {openModal && (
+      {/* Modal Ajout */}
+      {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-slate-800">
-                {editingId ? "Modifier" : "Nouvelle"} Ressource
-              </h2>
-              <button onClick={() => setOpenModal(false)} className="rounded-lg p-2 hover:bg-slate-100">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-xl font-bold">Ajouter une ressource</h2>
+              <button onClick={() => { setShowModal(false); setForm({ title: "", description: "", type: "pdf", file_url: "", external_url: "" }); }}
+                className="rounded-full p-1 hover:bg-slate-100">
                 <X size={20} className="text-slate-600" />
               </button>
             </div>
-
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Titre *</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Titre de la ressource..."
-                  className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                />
+                <label className="mb-1 block text-sm font-medium">Titre *</label>
+                <input type="text" value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  className="w-full rounded-xl border p-3 outline-none focus:border-blue-500"
+                  placeholder="Titre de la ressource" />
               </div>
-
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Description (optionnel)..."
-                  rows={2}
-                  className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                />
+                <label className="mb-1 block text-sm font-medium">Description (optionnel)</label>
+                <input type="text" value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  className="w-full rounded-xl border p-3 outline-none focus:border-blue-500" />
               </div>
-
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Type *</label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value, file_url: "", external_url: "" })}
-                  className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                >
-                  <option value="pdf">📄 PDF</option>
-                  <option value="video">🎬 Vidéo (YouTube / Vimeo)</option>
-                  <option value="link">🔗 Lien externe</option>
+                <label className="mb-1 block text-sm font-medium">Type</label>
+                <select value={form.type}
+                  onChange={(e) => setForm({ ...form, type: e.target.value, file_url: "", external_url: "" })}
+                  className="w-full rounded-xl border p-3 outline-none focus:border-blue-500">
+                  <option value="pdf">PDF / Fichier</option>
+                  <option value="video">Vidéo (YouTube/Vimeo)</option>
+                  <option value="link">Lien externe</option>
                 </select>
               </div>
 
-              {formData.type === "pdf" && (
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">URL du fichier PDF</label>
-                  <input
-                    type="text"
-                    value={formData.file_url}
-                    onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
-                    placeholder="https://example.com/fichier.pdf"
-                    className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                  />
-                </div>
-              )}
+              {form.type === "pdf" && (
+                <div className="space-y-3">
+                  {/* رفع من الجهاز */}
+                  <div className="rounded-xl border-2 border-dashed border-slate-300 p-4 text-center hover:border-blue-400 transition-colors">
+                    <Upload size={24} className="mx-auto mb-2 text-slate-400" />
+                    <p className="text-sm text-slate-500 mb-2">Glissez un fichier ou cliquez pour choisir</p>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.ppt,.pptx"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="file-upload-admin"
+                    />
+                    <label htmlFor="file-upload-admin"
+                      className="cursor-pointer rounded-lg bg-blue-50 px-4 py-2 text-sm text-blue-600 hover:bg-blue-100">
+                      {uploading ? "Upload en cours..." : "Choisir un fichier"}
+                    </label>
+                  </div>
 
-              {formData.type === "video" && (
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Lien YouTube / Vimeo *</label>
-                  <input
-                    type="text"
-                    value={formData.external_url}
-                    onChange={(e) => setFormData({ ...formData, external_url: e.target.value })}
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                  />
-                  {formData.external_url && getYoutubeThumbnail(formData.external_url) && (
-                    <div className="mt-2 relative w-full h-36 rounded-xl overflow-hidden">
-                      <img
-                        src={getYoutubeThumbnail(formData.external_url)!}
-                        alt="preview"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                        <Play size={32} className="text-white" />
-                      </div>
-                    </div>
+                  {/* أو رابط مباشر */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-px bg-slate-200" />
+                    <span className="text-xs text-slate-400">ou</span>
+                    <div className="flex-1 h-px bg-slate-200" />
+                  </div>
+                  <input type="text" value={form.file_url}
+                    onChange={(e) => setForm({ ...form, file_url: e.target.value })}
+                    className="w-full rounded-xl border p-3 outline-none focus:border-blue-500"
+                    placeholder="Coller un lien https://..." />
+
+                  {form.file_url && (
+                    <p className="text-xs text-green-600">✓ Fichier prêt : {form.file_url.split("/").pop()}</p>
                   )}
                 </div>
               )}
 
-              {formData.type === "link" && (
+              {(form.type === "video" || form.type === "link") && (
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Lien externe *</label>
-                  <input
-                    type="text"
-                    value={formData.external_url}
-                    onChange={(e) => setFormData({ ...formData, external_url: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                  />
+                  <label className="mb-1 block text-sm font-medium">
+                    {form.type === "video" ? "Lien YouTube / Vimeo *" : "Lien externe *"}
+                  </label>
+                  <input type="text" value={form.external_url}
+                    onChange={(e) => setForm({ ...form, external_url: e.target.value })}
+                    className="w-full rounded-xl border p-3 outline-none focus:border-blue-500"
+                    placeholder="https://..." />
                 </div>
               )}
 
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Niveau</label>
-                <select
-                  value={formData.level_id}
-                  onChange={(e) => setFormData({ ...formData, level_id: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                >
-                  <option value="">Tous les niveaux</option>
-                  {levelsData.map((l) => (
-                    <option key={l.id} value={l.id}>{l.name}</option>
-                  ))}
-                </select>
+              <div className="flex gap-3 mt-4">
+                <button onClick={() => { setShowModal(false); setForm({ title: "", description: "", type: "pdf", file_url: "", external_url: "" }); }}
+                  className="flex-1 rounded-xl border border-slate-200 py-3 text-slate-600 hover:bg-slate-50">
+                  Annuler
+                </button>
+                <button onClick={handleAdd}
+                  className="flex-1 rounded-xl bg-blue-600 py-3 text-white font-bold hover:bg-blue-700">
+                  Enregistrer
+                </button>
               </div>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => setOpenModal(false)}
-                className="rounded-xl border border-slate-200 px-5 py-2 text-sm text-slate-600 hover:bg-slate-50"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleSaveResource}
-                className="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-              >
-                {editingId ? "Modifier" : "Ajouter"}
-              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal Confirmation Suppression */}
+      {/* Modal Suppression */}
       {deleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
             <h2 className="text-lg font-semibold text-slate-800">Confirmer la suppression</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Voulez-vous vraiment supprimer cette ressource ?
-            </p>
+            <p className="mt-2 text-sm text-slate-500">Voulez-vous vraiment supprimer cette ressource ?</p>
             <div className="mt-5 flex justify-end gap-3">
-              <button
-                onClick={() => { setDeleteModal(false); setDeleteTargetId(null); }}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
-              >
+              <button onClick={() => { setDeleteModal(false); setDeleteTargetId(null); }}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">
                 Annuler
               </button>
-              <button
-                onClick={confirmDelete}
-                className="rounded-xl bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
-              >
+              <button onClick={confirmDelete}
+                className="rounded-xl bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600">
                 Supprimer
               </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

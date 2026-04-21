@@ -29,25 +29,41 @@ router.get("/info", protect, (req, res) => {
   });
 });
 
+
+
 // GET /api/student/resources
 router.get("/resources", protect, (req, res) => {
   const userId = req.user.id;
-
   db.query(`SELECT student_id FROM users WHERE id = ?`, [userId], (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!results[0]?.student_id) return res.json([]);
 
     const studentId = results[0].student_id;
 
-    const sql = `
-      SELECT r.* FROM resources r
-      JOIN students s ON s.group_id = r.group_id
+    // جلب group_id و level_id للطالب
+    db.query(`
+      SELECT s.group_id, g.level_id 
+      FROM students s
+      LEFT JOIN groups_table g ON s.group_id = g.id
       WHERE s.id = ?
-      ORDER BY r.created_at DESC
-    `;
-    db.query(sql, [studentId], (err, rows) => {
+    `, [studentId], (err, studentData) => {
       if (err) return res.status(500).json({ error: err.message });
-      res.json(rows);
+      if (!studentData[0]) return res.json([]);
+
+      const { group_id, level_id } = studentData[0];
+
+      // جلب الموارد بـ group_id أو level_id
+      const sql = `
+        SELECT r.*, t.name as teacher_name
+        FROM resources r
+        LEFT JOIN teachers t ON r.teacher_id = t.id
+        WHERE r.group_id = ? OR r.level_id = ?
+        ORDER BY r.created_at DESC
+      `;
+      db.query(sql, [group_id, level_id], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+      });
     });
   });
 });

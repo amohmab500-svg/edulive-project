@@ -11,6 +11,9 @@ app.use(
 );
 app.use(express.json());
 // --- 1. استدعاء المسارات (Routes) ---
+const path = require("path");
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 const authRoutes = require("./routes/auth");
 const levelsRoutes = require("./routes/levels");
 const studentsRoutes = require("./routes/students");
