@@ -144,20 +144,21 @@ export default function Dashboard() {
         </div>
 
         {/* Pie Chart */}
-        <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
-          <h2 className="text-lg font-semibold text-slate-800 mb-5">Répartition par Niveau</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
+      
+                <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
+               <h2 className="text-lg font-semibold text-slate-800 mb-5">Répartition par Niveau</h2>
+              <ResponsiveContainer width="100%" height={320}>
+              <PieChart>
               <Pie
                 data={studentsPerLevel}
-                dataKey="count"
-                nameKey="level_name"
-                cx="50%"
-                cy="50%"
-                outerRadius={90}
-                label={({ level_name, percent }: any) => `${level_name} (${(percent * 100).toFixed(0)}%)`}
+                 dataKey="count"
+                  nameKey="level_name"
+                 cx="50%"
+                 cy="50%"
+                 outerRadius={100}
+                 label={({ level_name, percent }: any) => `${level_name} (${(percent * 100).toFixed(0)}%)`}
                 labelLine={true}
-              >
+      >
                 {studentsPerLevel.map((_: any, index: number) => (
                   <Cell key={index} fill={COLORS[index % COLORS.length]} />
                 ))}

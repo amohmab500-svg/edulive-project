@@ -8,7 +8,7 @@ interface Level {
   id: number;
   name: string;
   description: string;
-  image?: string; // استخدام التسمية الجديدة المطابقة لقاعدة البيانات
+  image?: string;
 }
 
 export default function HomePage() {
@@ -24,45 +24,25 @@ export default function HomePage() {
     <div>
       {/* Hero Section */}
       <section className="bg-slate-900 text-white">
-        <div className="mx-auto max-w-7xl px-6 py-20 grid grid-cols-1 gap-12 lg:grid-cols-2 items-center">
-          <div>
-            <h1 className="text-5xl font-extrabold leading-tight">
-              Des cours vivants pour des esprits brillants !
-            </h1>
-            <p className="mt-6 text-slate-400 text-lg leading-relaxed">
-              Bienvenue sur Edulive, la plateforme qui réinventه l'apprentissage en ligne.
-              Enseignants et apprenants se connectent en direct ou en replay pour vivre une
-              expérience fluide, interactive et accessible.
-            </p>
-            <Link
-              to="/register"
-              className="mt-8 inline-block rounded-full bg-white px-8 py-3 font-semibold text-slate-900 hover:bg-slate-100 transition"
-            >
-              Inscrivez-vous
-            </Link>
-          </div>
-
-          {/* Features circles */}
-          <div className="relative flex items-center justify-center">
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { icon: "📹", label: "Google Meet" },
-                { icon: "✅", label: "Présence" },
-                { icon: "📄", label: "Ressources" },
-                { icon: "💬", label: "Messages" },
-                { icon: "📝", label: "Devoirs" },
-              ].map((item) => (
-                <div key={item.label} className="flex flex-col items-center justify-center rounded-full border-2 border-orange-400 w-28 h-28 text-center">
-                  <span className="text-2xl">{item.icon}</span>
-                  <span className="text-xs text-orange-400 font-medium mt-1">{item.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="mx-auto max-w-7xl px-6 py-20 flex flex-col items-start justify-center min-h-[60vh]">
+          <h1 className="text-5xl font-extrabold leading-tight max-w-2xl">
+            Des cours vivants pour des esprits brillants !
+          </h1>
+          <p className="mt-6 text-slate-400 text-lg leading-relaxed max-w-xl">
+            Bienvenue sur Edulive, la plateforme qui réinvente l'apprentissage en ligne.
+            Enseignants et apprenants se connectent en direct ou en replay pour vivre une
+            expérience fluide, interactive et accessible.
+          </p>
+          <Link
+            to="/register"
+            className="mt-8 inline-block rounded-full bg-white px-8 py-3 font-semibold text-slate-900 hover:bg-slate-100 transition"
+          >
+            Inscrivez-vous
+          </Link>
         </div>
       </section>
 
-      {/* Niveaux Section - التحديث الجديد هنا */}
+      {/* Niveaux Section */}
       <section className="bg-slate-50 py-20">
         <div className="mx-auto max-w-7xl px-6 text-center">
           <h2 className="text-4xl font-bold text-slate-900">Inscrivez-vous maintenant</h2>
@@ -75,7 +55,6 @@ export default function HomePage() {
                 to={`/register?level=${level.id}`}
                 className="group relative h-64 overflow-hidden rounded-2xl shadow-sm hover:shadow-md transition duration-300"
               >
-                {/* Image */}
                 {level.image ? (
                   <img
                     src={level.image}
@@ -85,11 +64,7 @@ export default function HomePage() {
                 ) : (
                   <div className="absolute inset-0 bg-slate-300" />
                 )}
-
-                {/* Blue overlay matching reference */}
                 <div className="absolute inset-0 bg-blue-900/50 group-hover:bg-blue-900/40 transition duration-300" />
-
-                {/* Content Overlay */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4">
                   <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm mb-3">
                     <span className="text-2xl">🎓</span>
@@ -102,7 +77,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* باقي الأقسام كما هي */}
+      {/* Features */}
       <section className="py-20 bg-white">
         <div className="mx-auto max-w-7xl px-6 space-y-20">
           {[
